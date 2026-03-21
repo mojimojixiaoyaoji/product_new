@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能问数 ChatBI</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        :root {
+            --main: #D9000F;
+            --main-light: #FFF2F2;
+            --main-hover: #C0000D;
+            --bg: #F7F8FA;
+            --card: #FFFFFF;
+            --text-title: #1D2129;
+            --text-content: #4E5969;
+            --text-secondary: #86909C;
+            --border: #E5E6EB;
+        }
+
+        body {
+            background: var(--bg);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 60px;
+            background: var(--main);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+            position: relative;
+        }
+
+        /* 左侧整体 */
+        .chat-section {
+            width: 420px;
+            background: #fff;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.1s ease;
+        }
+
+        /* 分隔线 */
+        .resizer {
+            width: 4px;
+            background: var(--border);
+            cursor: col-resize;
+            position: relative;
+        }
+
+        .resizer:hover {
+            background: var(--main);
+        }
+
+        .resizer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 100%;
+            background: var(--main);
+            opacity: 0;
+        }
+
+        .resizer:hover::before {
+            opacity: 1;
+        }
+
+        /* 右侧结果 */
+        .result-section {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 历史会话栏 */
+        .session-bar {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        /* 历史会话列表 */
+        .session-list {
+            max-height: 160px;
+            overflow-y: auto;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .session-item {
+            padding: 10px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-item:hover {
+            background: #f5f5f5;
+        }
+
+        .session-item:hover .del-btn {
+            opacity: 1;
+        }
+
+        .session-item.active {
+            background: var(--main-light);
+            color: var(--main);
+            border-left: 3px solid var(--main);
+        }
+
+        .del-btn {
+            color: #ccc;
+            font-size: 12px;
+            opacity: 0;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .del-btn:hover {
+            color: var(--main);
+        }
+
+        /* 对话区标题栏 + 新对话按钮 */
+        .chat-title {
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .new-session-btn {
+            padding: 6px 12px;
+            background: var(--main);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .new-session-btn:hover {
+            background: var(--main-hover);
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .bubble-user {
+            background: var(--main);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bubble-bot {
+            background: #f5f5f5;
+            color: var(--text-content);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .bubble-user.active {
+            box-shadow: 0 0 0 2px var(--main);
+            opacity: 1;
+        }
+
+        .msg-time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .input-bar {
+            padding: 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .voice-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: var(--main);
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .query-input {
+            flex: 1;
+            height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0 12px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .send-btn {
+            height: 44px;
+            padding: 0 20px;
+            background: var(--main);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .send-btn:hover {
+            background: var(--main-hover);
+        }
+
+        /* 右侧结果 */
+        .result-section {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .query-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-left: 4px solid var(--main);
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .query-card.active {
+            opacity: 1;
+            box-shadow: 0 0 0 2px var(--main), 0 4px 16px rgba(217,0,15,0.12);
+            transform: translateY(-1px);
+        }
+
+        .query-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .query-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--text-title);
+        }
+
+        .query-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .query-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .content-block {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+
+        .content-block:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .block-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--main);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .block-title > div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-btn {
+            padding: 6px 12px;
+            background: var(--main);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .export-btn:hover {
+            background: var(--main-hover);
+            transform: translateY(-1px);
+        }
+
+        .metrics {
+            display: flex;
+            gap: 20px;
+        }
+
+        .metric-item {
+            flex: 1;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--main);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        .table th {
+            background: var(--main-light);
+            color: var(--main);
+            padding: 10px;
+            text-align: left;
+            font-weight: normal;
+            font-size: 14px;
+        }
+
+        .table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text-content);
+        }
+
+        .chart-box {
+            width: 100%;
+            height: 300px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 16px;
+        }
+
+        /* 图表切换按钮 */
+        .chart-switcher-inline {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .chart-switcher-inline button {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .chart-switcher-inline button.active {
+            background: var(--main-light);
+            border-color: var(--main);
+            color: var(--main);
+        }
+
+        .chart-switcher-inline button:hover {
+            border-color: var(--main);
+            transform: translateY(-1px);
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: var(--text-title);
+        }
+
+        .report-content {
+            line-height: 1.8;
+            color: var(--text-content);
+            font-size: 14px;
+        }
+
+        .report-content h4 {
+            color: var(--main);
+            margin: 8px 0 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">智能问数 ChatBI</div>
+    <div class="header-right">
+    </div>
+</div>
+
+<div class="container">
+    <div class="chat-section" id="chatSection">
+        <!-- 历史对话 -->
+        <div class="session-bar">历史对话</div>
+        <div class="session-list" id="sessionList"></div>
+
+        <!-- 对话标题栏 + 新对话按钮 -->
+        <div class="chat-title">
+            对话
+            <button class="new-session-btn" onclick="newSession()">+ 新对话</button>
+        </div>
+
+        <div class="messages" id="messages">
+            <div class="bubble bubble-bot">你好！我是智能问数助手，支持查数据、生成图表、生成报告。</div>
+        </div>
+
+        <div class="input-bar">
+            <button class="voice-btn">🎤</button>
+            <input type="text" class="query-input" id="queryInput" placeholder="请输入问题...">
+            <button class="send-btn" onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <div class="resizer" id="resizer"></div>
+
+    <div class="result-section" id="resultSection">
+        <div style="text-align:center; color:#999; padding: 40px 24px;">
+            <div style="margin-bottom:16px;">在左侧对话框发送需求，结果将在此区域展示。</div>
+            <div style="font-size:13px; color:#bbb;">试试问我：</div>
+            <div style="font-size:13px; margin-top:8px; line-height:1.6;">
+                <span style="color:#D9000F; cursor:pointer; margin:0 4px; padding:4px 8px; border-radius:4px;" onclick="sendExampleQuery('查询最近一周的水泥强度预测情况')">查询最近一周的水泥强度预测情况</span>
+                <span style="color:#D9000F; cursor:pointer; margin:0 4px; padding:4px 8px; border-radius:4px;" onclick="sendExampleQuery('生成项目工时图表')">生成项目工时图表</span>
+                <span style="color:#D9000F; cursor:pointer; margin:0 4px; padding:4px 8px; border-radius:4px;" onclick="sendExampleQuery('撰写近一年模型更新情况数据报告')">撰写近一年模型更新情况数据报告</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chartIndex = 0;
+    let messageIdCounter = 0;
+    let currentActiveMsgId = null;
+    let currentSessionId = "sess_" + Date.now();
+
+    // 存储结构
+    let store = {
+        sessions: [],
+        currentSessionId: null,
+        data: {},
+        recentDataQuery: null // 最近一次数据查询结果
+    };
+
+    // 新建对话（自动显示开场白）
+    function newSession() {
+        const sid = "sess_" + Date.now();
+        store.sessions.unshift({ id: sid, name: "新对话", time: new Date().toLocaleString() });
+        store.currentSessionId = sid;
+        
+        // 新对话自动加入开场白
+        const welcomeMsg = `<div class="bubble bubble-bot">你好！我是智能问数助手，支持查数据、生成图表、生成报告。</div>`;
+        store.data[sid] = { messages: [welcomeMsg], cards: [] };
+        
+        saveStore();
+        switchSession(sid);
+        renderSessionList();
+    }
+
+    // 删除会话
+    function deleteSession(sid, e) {
+        e.stopPropagation();
+        if (!confirm("确定删除该对话？")) return;
+
+        // 删除数据
+        store.sessions = store.sessions.filter(s => s.id !== sid);
+        delete store.data[sid];
+
+        // 如果删的是当前对话，自动切到第一个
+        if (sid === store.currentSessionId) {
+            if (store.sessions.length > 0) {
+                switchSession(store.sessions[0].id);
+            } else {
+                newSession();
+            }
+        }
+        saveStore();
+        renderSessionList();
+    }
+
+    // 默认提示HTML
+    const defaultTipHtml = `
+        <div style="text-align:center; color:#999; padding: 40px 24px;">
+            <div style="margin-bottom:16px;">在左侧对话框发送需求，结果将在此区域展示。</div>
+            <div style="font-size:13px; color:#bbb;">试试问我：</div>
+            <div style="font-size:13px; margin-top:8px; line-height:1.6;">
+                <span style="color:#D9000F; cursor:pointer; margin:0 4px; padding:4px 8px; border-radius:4px;" onclick="sendExampleQuery('查询最近一周的水泥强度预测情况')">查询最近一周的水泥强度预测情况</span>
+                <span style="color:#D9000F; cursor:pointer; margin:0 4px; padding:4px 8px; border-radius:4px;" onclick="sendExampleQuery('生成项目工时图表')">生成项目工时图表</span>
+                <span style="color:#D9000F; cursor:pointer; margin:0 4px; padding:4px 8px; border-radius:4px;" onclick="sendExampleQuery('撰写近一年模型更新情况数据报告')">撰写近一年模型更新情况数据报告</span>
+            </div>
+        </div>`;
+
+    // 切换会话
+    function switchSession(sid) {
+        currentSessionId = sid;
+        store.currentSessionId = sid;
+        saveStore();
+
+        const sess = store.data[sid] || { messages: [], cards: [] };
+        document.getElementById("messages").innerHTML = sess.messages.join("");
+        // 如果没有卡片，显示默认提示
+        const resSection = document.getElementById("resultSection");
+        if (sess.cards.length === 0 || sess.cards.join("").trim() === "") {
+            resSection.innerHTML = defaultTipHtml;
+        } else {
+            resSection.innerHTML = sess.cards.join("");
+        }
+        renderSessionList();
+    }
+
+    // 渲染历史列表
+    function renderSessionList() {
+        const list = document.getElementById("sessionList");
+        list.innerHTML = "";
+        store.sessions.forEach(s => {
+            const active = s.id === store.currentSessionId ? "active" : "";
+            list.innerHTML += `
+            <div class="session-item ${active}" onclick="switchSession('${s.id}')">
+                <span>${s.name}</span>
+                <span class="del-btn" onclick="deleteSession('${s.id}', event)">✕</span>
+            </div>`;
+        });
+    }
+
+    // 发送消息
+    function sendMessage() {
+        const input = document.getElementById('queryInput');
+        const msg = input.value.trim();
+        if (!msg) return;
+
+        const msgId = "msg_" + (messageIdCounter++);
+        const messages = document.getElementById('messages');
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // 更新会话名称
+        const sess = store.sessions.find(s => s.id === currentSessionId);
+        if (sess.name === "新对话") sess.name = msg.length > 12 ? msg.slice(0, 12) + "..." : msg;
+
+        const msgHtml = `
+        <div class="bubble bubble-user" msg-id="${msgId}" onclick="selectItem('${msgId}')">
+            ${msg}
+            <div class="msg-time">${now}</div>
+        </div>`;
+
+        messages.innerHTML += msgHtml;
+        input.value = '';
+
+        // 处理"查询报告"的特殊情况
+        if (msg === '查询报告') {
+            setTimeout(() => {
+                if (store.recentDataQuery) {
+                    messages.innerHTML += `<div class="bubble bubble-bot">正在基于最近一次查询结果生成报告...</div>`;
+                    messages.scrollTop = messages.scrollHeight;
+                    
+                    setTimeout(() => {
+                        addQueryCard(msgId, msg, true, false, true, 'model_update', true);
+                        setTimeout(() => selectItem(msgId), 400);
+                        saveCurrentSession();
+                        renderSessionList();
+                    }, 1000);
+                } else {
+                    messages.innerHTML += `<div class="bubble bubble-bot">需要明确要查询的数据才能出报告，请先查询具体数据</div>`;
+                    messages.scrollTop = messages.scrollHeight;
+                    saveCurrentSession();
+                    renderSessionList();
+                }
+            }, 600);
+            return;
+        }
+
+        setTimeout(() => {
+            // 识别具体的查询类型
+            let queryType = 'default';
+            if (msg.includes('水泥强度预测')) {
+                queryType = 'cement_strength';
+            } else if (msg.includes('项目工时图表')) {
+                queryType = 'project_hours';
+            } else if (msg.includes('模型更新情况数据报告')) {
+                queryType = 'model_update';
+            }
+            
+            let needData = false;
+            let needChart = false;
+            let needReport = false;
+            let hasResult = true; // 是否有查询结果
+            
+            // 根据查询类型设置需要的内容
+            switch(queryType) {
+                case 'cement_strength':
+                    needData = true;
+                    needChart = true;
+                    break;
+                case 'project_hours':
+                    needChart = true;
+                    break;
+                case 'model_update':
+                    needReport = true;
+                    needData = true;
+                    break;
+                default:
+                    needData = /数据|多少|产量|指标|表格/.test(msg.toLowerCase());
+                    needChart = /图表|趋势|图|曲线/.test(msg.toLowerCase());
+                    needReport = /报告|分析|总结|建议/.test(msg.toLowerCase());
+                    // 非特定关键词查询，模拟无结果情况
+                    if (!needData && !needChart && !needReport) {
+                        hasResult = false;
+                    }
+            }
+            
+            let reply = '好的，';
+            const arr = [];
+            if (needData) arr.push('为你查询数据');
+            if (needChart) arr.push('为你生成图表');
+            if (needReport) arr.push('为你生成报告');
+            reply += arr.join('，') + '...';
+            messages.innerHTML += `<div class="bubble bubble-bot">${reply}</div>`;
+            messages.scrollTop = messages.scrollHeight;
+
+            // 存储最近一次数据查询结果
+            if (hasResult && (needData || needChart)) {
+                store.recentDataQuery = {
+                    query: msg,
+                    queryType: queryType,
+                    timestamp: new Date().toISOString()
+                };
+            }
+
+            addQueryCard(msgId, msg, needData, needChart, needReport, queryType, hasResult);
+            setTimeout(() => selectItem(msgId), 400);
+            saveCurrentSession();
+            renderSessionList();
+        }, 600);
+    }
+
+    // 新增卡片
+    function addQueryCard(msgId, msg, needData, needChart, needReport, queryType = 'default', hasResult = true) {
+        const res = document.getElementById('resultSection');
+        
+        // 移除之前所有的下一步建议
+        const oldNextSteps = res.querySelectorAll('[style*="background:#FFF2F2"]');
+        oldNextSteps.forEach(el => el.remove());
+        
+        // 第一次添加卡片时，清空默认提示
+        if (res.querySelector('.query-card') === null) {
+            res.innerHTML = '';
+        }
+        const now = new Date().toLocaleString();
+        const cardId = 'query_' + msgId;
+        const chartId = 'chart_' + chartIndex++;
+
+        let html = `
+        <div class="query-card" id="${cardId}" msg-id="${msgId}" onclick="selectItem('${msgId}')">
+            <div class="query-header">
+                <div class="query-title">问题：${msg}</div>
+                <div class="query-time">${now}</div>
+            </div>
+            <div class="query-content">`;
+
+        // 无结果提示
+        if (!hasResult) {
+            html += `
+            <div class="content-block" style="text-align:center; padding:40px 20px;">
+                <div style="font-size:14px; color:#999; margin-bottom:12px;">未找到相关数据</div>
+                <div style="font-size:13px; color:#bbb;">请尝试以下查询：</div>
+                <div style="font-size:13px; margin-top:12px;">
+                    <span style="color:#D9000F; cursor:pointer; padding:4px 8px;" onclick="sendExampleQuery('查询最近一周的水泥强度预测情况')">查询最近一周的水泥强度预测情况</span>
+                </div>
+            </div>`;
+        } else {
+            // 有结果时的内容
+            if (needData) {
+                if (queryType === 'cement_strength') {
+                    html += `
+                    <div class="content-block">
+                        <div class="block-title">数据结果<button class="export-btn" onclick="exportTable('${cardId}')">导出表格</button></div>
+                        <div class="report-content" style="margin-bottom:12px;"><p>根据查询结果，最近一周水泥强度预测情况良好，平均强度达到 48.5 MPa，符合国家标准要求。</p></div>
+                        <table class="table" id="${cardId}_table"><tr><th>日期</th><th>批次</th><th>预测强度(MPa)</th><th>实际强度(MPa)</th></tr><tr><td>2026-03-04</td><td>A1</td><td>48.2</td><td>48.5</td></tr><tr><td>2026-03-05</td><td>A2</td><td>48.7</td><td>49.1</td></tr><tr><td>2026-03-06</td><td>A3</td><td>47.9</td><td>48.2</td></tr><tr><td>2026-03-07</td><td>A4</td><td>49.0</td><td>49.3</td></tr></table>
+                    </div>`;
+                } else if (queryType === 'model_update') {
+                    html += `
+                    <div class="content-block">
+                        <div class="block-title">数据结果<button class="export-btn" onclick="exportTable('${cardId}')">导出表格</button></div>
+                        <div class="report-content" style="margin-bottom:12px;"><p>根据查询结果，近一年模型更新情况良好，共完成 12 次模型迭代，预测准确率从 85% 提升至 92%。</p></div>
+                        <table class="table" id="${cardId}_table"><tr><th>更新日期</th><th>模型版本</th><th>准确率</th><th>迭代内容</th></tr><tr><td>2025-03</td><td>V1.0</td><td>85%</td><td>基础模型构建</td></tr><tr><td>2025-06</td><td>V1.5</td><td>87%</td><td>特征工程优化</td></tr><tr><td>2025-09</td><td>V2.0</td><td>89%</td><td>算法改进</td></tr><tr><td>2026-03</td><td>V2.5</td><td>92%</td><td>集成学习</td></tr></table>
+                    </div>`;
+                } else {
+                    html += `
+                    <div class="content-block">
+                        <div class="block-title">数据结果<button class="export-btn" onclick="exportTable('${cardId}')">导出表格</button></div>
+                        <div class="report-content" style="margin-bottom:12px;"><p>根据查询结果，近期生产数据表现良好，产量稳定在 4100~4300 吨之间，合格率保持在 98.7% 以上，整体生产运行平稳。</p></div>
+                        <table class="table" id="${cardId}_table"><tr><th>日期</th><th>工厂</th><th>产量</th><th>合格率</th></tr><tr><td>2026-03-01</td><td>一厂</td><td>4200吨</td><td>99.2%</td></tr><tr><td>2026-03-02</td><td>一厂</td><td>4100吨</td><td>98.7%</td></tr></table>
+                    </div>`;
+                }
+            }
+
+            if (needChart) {
+                if (queryType === 'cement_strength') {
+                    html += `
+                    <div class="content-block">
+                        <div class="block-title">
+                            <div>
+                                趋势图表
+                                <div class="chart-switcher-inline">
+                                    <button onclick="switchChartType('${chartId}', 'line')" title="线图">📈</button>
+                                    <button onclick="switchChartType('${chartId}', 'bar')" title="柱图">📊</button>
+                                    <button onclick="switchChartType('${chartId}', 'pie')" title="饼图">🥧</button>
+                                </div>
+                            </div>
+                            <button class="export-btn" onclick="exportChart('${chartId}')">导出图表</button>
+                        </div>
+                        <div class="chart-title">水泥强度趋势图</div>
+                        <div class="chart-box" id="${chartId}" data-type="cement" data-chart-type="line"></div>
+                    </div>`;
+                } else if (queryType === 'project_hours') {
+                    html += `
+                    <div class="content-block">
+                        <div class="block-title">
+                            <div>
+                                趋势图表
+                                <div class="chart-switcher-inline">
+                                    <button onclick="switchChartType('${chartId}', 'line')" title="线图">📈</button>
+                                    <button onclick="switchChartType('${chartId}', 'bar')" title="柱图">📊</button>
+                                    <button onclick="switchChartType('${chartId}', 'pie')" title="饼图">🥧</button>
+                                </div>
+                            </div>
+                            <button class="export-btn" onclick="exportChart('${chartId}')">导出图表</button>
+                        </div>
+                        <div class="chart-title">项目工时分布图</div>
+                        <div class="chart-box" id="${chartId}" data-type="project" data-chart-type="line"></div>
+                    </div>`;
+                } else {
+                    html += `
+                    <div class="content-block">
+                        <div class="block-title">
+                            <div>
+                                趋势图表
+                                <div class="chart-switcher-inline">
+                                    <button onclick="switchChartType('${chartId}', 'line')" title="线图">📈</button>
+                                    <button onclick="switchChartType('${chartId}', 'bar')" title="柱图">📊</button>
+                                    <button onclick="switchChartType('${chartId}', 'pie')" title="饼图">🥧</button>
+                                </div>
+                            </div>
+                            <button class="export-btn" onclick="exportChart('${chartId}')">导出图表</button>
+                        </div>
+                        <div class="chart-title">产量趋势图</div>
+                        <div class="chart-box" id="${chartId}" data-type="default" data-chart-type="line"></div>
+                    </div>`;
+                }
+            }
+
+            if (needReport) {
+                if (queryType === 'model_update') {
+                    html += `
+                    <div class="content-block">
+                        <div class="block-title">数据分析报告<button class="export-btn" onclick="exportReport('${cardId}')">下载报告</button></div>
+                        <div class="report-content" id="${cardId}_report"><h4>一、核心结论</h4><p>近一年模型更新成效显著，预测准确率提升 7 个百分点，达到 92%，处于行业领先水平。</p><h4>二、数据表现</h4><p>模型迭代周期缩短至 3 个月一次，每次迭代平均提升准确率 1.75 个百分点。</p><h4>三、业务建议</h4><p>继续优化模型性能，探索深度学习方法，进一步提升预测精度。</p></div>
+                    </div>`;
+                } else {
+                    html += `
+                    <div class="content-block">
+                        <div class="block-title">数据分析报告<button class="export-btn" onclick="exportReport('${cardId}')">下载报告</button></div>
+                        <div class="report-content" id="${cardId}_report"><h4>一、核心结论</h4><p>近期产量稳步提升，环比增长8.3%，同比增长12.5%，生产状态良好。</p><h4>二、数据表现</h4><p>产量稳定在 4100~4300 吨，合格率 ≥98.7%，设备运行正常。</p><h4>三、业务建议</h4><p>保持现有生产节奏，持续监控合格率与设备稳定性。</p></div>
+                    </div>`;
+                }
+            }
+
+            // 下一步建议
+            const nextSteps = getNextSteps(queryType, needData, needChart, needReport);
+            if (nextSteps.length > 0) {
+                html += `
+                <div style="background:#FFF2F2; border:1px solid #FFD6D6; border-radius:8px; padding:16px; margin-top:12px;">
+                    <div style="font-size:13px; color:#666; display:flex; flex-wrap:wrap; gap:8px;">`;
+                nextSteps.forEach((step, index) => {
+                    html += `<span style="color:#D9000F; cursor:pointer; padding:6px 12px; border-radius:16px; background:white; border:1px solid #D9000F; font-size:12px; transition:all 0.2s;" onclick="sendExampleQuery('${step}')" onmouseover="this.style.backgroundColor='#D9000F'; this.style.color='white';" onmouseout="this.style.backgroundColor='white'; this.style.color='#D9000F';">${step}</span>`;
+                });
+                html += `</div></div>`;
+            }
+        }
+
+        html += `</div></div>`;
+        res.innerHTML += html;
+        res.scrollTop = res.scrollHeight;
+        if (hasResult && needChart) setTimeout(() => renderSingleChart(chartId), 300);
+    }
+
+    // 获取下一步建议
+    function getNextSteps(queryType, needData, needChart, needReport) {
+        const steps = [];
+        switch(queryType) {
+            case 'cement_strength':
+                steps.push('生成水泥强度趋势图表');
+                steps.push('分析水泥强度影响因素');
+                steps.push('预测下周水泥强度');
+                break;
+            case 'project_hours':
+                steps.push('分析项目工时效率');
+                steps.push('生成项目成本报告');
+                steps.push('对比不同项目工时');
+                break;
+            case 'model_update':
+                steps.push('对比不同模型版本性能');
+                steps.push('预测下季度模型效果');
+                steps.push('分析模型更新趋势');
+                break;
+            default:
+                if (needData && !needChart) steps.push('生成趋势图表');
+                if (needData && !needReport) steps.push('生成分析报告');
+                if (needChart && !needData) steps.push('查看详细数据');
+                // 确保至少三条建议
+                if (steps.length < 3) {
+                    if (!steps.includes('生成趋势图表')) steps.push('生成趋势图表');
+                    if (!steps.includes('生成分析报告')) steps.push('生成分析报告');
+                    if (!steps.includes('查看详细数据')) steps.push('查看详细数据');
+                }
+        }
+        return steps;
+    }
+
+    // 选中联动
+    function selectItem(msgId) {
+        document.querySelectorAll('.bubble-user.active, .query-card.active').forEach(el => el.classList.remove('active'));
+        currentActiveMsgId = msgId;
+        const msgEl = document.querySelector(`.bubble-user[msg-id="${msgId}"]`);
+        const cardEl = document.querySelector(`.query-card[msg-id="${msgId}"]`);
+        if (msgEl) msgEl.classList.add('active');
+        if (cardEl) { cardEl.classList.add('active'); cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
+
+    // 渲染图表
+    function renderSingleChart(chartId) {
+        const dom = document.getElementById(chartId);
+        const chart = echarts.init(dom);
+        
+        // 清除之前的配置
+        chart.clear();
+        
+        // 获取图表类型
+        const chartType = dom.dataset.type || 'default';
+        const chartMode = dom.dataset.chartType || 'line';
+        
+        // 设置按钮激活状态
+        const chartBox = dom.closest('.content-block');
+        if (chartBox) {
+            const buttons = chartBox.querySelectorAll('.chart-switcher-inline button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            const typeMap = { 'line': 0, 'bar': 1, 'pie': 2 };
+            if (typeMap[chartMode] !== undefined && buttons[typeMap[chartMode]]) {
+                buttons[typeMap[chartMode]].classList.add('active');
+            }
+        }
+        
+        let option = {};
+        
+        switch(chartType) {
+            case 'cement':
+                if (chartMode === 'pie') {
+                    // 饼图 - 显示平均强度
+                    option = {
+                        tooltip: { trigger: 'item' },
+                        series: [
+                            {
+                                name: '强度分布',
+                                type: 'pie',
+                                radius: '60%',
+                                data: [
+                                    { value: 48.5, name: '平均预测强度' },
+                                    { value: 48.8, name: '平均实际强度' }
+                                ],
+                                itemStyle: {
+                                    color: function(params) {
+                                        return params.dataIndex === 0 ? '#D9000F' : '#0066CC';
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                } else {
+                    // 线图或柱图
+                    option = {
+                        tooltip: { trigger: 'axis' },
+                        xAxis: { type: 'category', data: ['2026-03-04', '2026-03-05', '2026-03-06', '2026-03-07'] },
+                        yAxis: { type: 'value', name: '强度(MPa)' },
+                        series: [
+                            { name: '预测强度', type: chartMode, data: [48.2, 48.7, 47.9, 49.0], itemStyle: { color: '#D9000F' }, lineStyle: { color: '#D9000F' } },
+                            { name: '实际强度', type: chartMode, data: [48.5, 49.1, 48.2, 49.3], itemStyle: { color: '#0066CC' }, lineStyle: { color: '#0066CC' } }
+                        ]
+                    };
+                }
+                break;
+            case 'project':
+                if (chartMode === 'pie') {
+                    // 饼图 - 显示工时占比
+                    option = {
+                        tooltip: { trigger: 'item' },
+                        series: [
+                            {
+                                name: '工时占比',
+                                type: 'pie',
+                                radius: '60%',
+                                data: [
+                                    { value: 85, name: '需求分析' },
+                                    { value: 115, name: '设计' },
+                                    { value: 210, name: '开发' },
+                                    { value: 110, name: '测试' },
+                                    { value: 45, name: '部署' }
+                                ]
+                            }
+                        ]
+                    };
+                } else {
+                    // 线图或柱图
+                    option = {
+                        tooltip: { trigger: 'axis' },
+                        xAxis: { type: 'category', data: ['需求分析', '设计', '开发', '测试', '部署'] },
+                        yAxis: { type: 'value', name: '工时(小时)' },
+                        series: [
+                            { name: '计划工时', type: chartMode, data: [80, 120, 200, 100, 50], itemStyle: { color: '#D9000F' } },
+                            { name: '实际工时', type: chartMode, data: [85, 115, 210, 110, 45], itemStyle: { color: '#0066CC' } }
+                        ]
+                    };
+                }
+                break;
+            default:
+                if (chartMode === 'pie') {
+                    // 饼图 - 显示产量分布
+                    option = {
+                        tooltip: { trigger: 'item' },
+                        series: [
+                            {
+                                name: '产量分布',
+                                type: 'pie',
+                                radius: '60%',
+                                data: [
+                                    { value: 4200, name: '2026-03-01' },
+                                    { value: 4100, name: '2026-03-02' },
+                                    { value: 4300, name: '2026-03-03' }
+                                ]
+                            }
+                        ]
+                    };
+                } else {
+                    // 线图或柱图
+                    option = {
+                        tooltip: { trigger: 'axis' },
+                        xAxis: { type: 'category', data: ['2026-03-01', '2026-03-02', '2026-03-03'] },
+                        yAxis: { type: 'value' },
+                        series: [{ name: '产量', type: chartMode, data: [4200, 4100, 4300], itemStyle: { color: '#D9000F' }, lineStyle: { color: '#D9000F' }, areaStyle: { color: 'rgba(217,0,15,0.2)' } }]
+                    };
+                }
+        }
+        
+        chart.setOption(option);
+        window[chartId] = chart;
+    }
+
+    // 切换图表类型
+    function switchChartType(chartId, type) {
+        const dom = document.getElementById(chartId);
+        if (dom) {
+            dom.dataset.chartType = type;
+            renderSingleChart(chartId);
+            
+            // 更新按钮状态
+            const chartBox = dom.closest('.content-block');
+            if (chartBox) {
+                const buttons = chartBox.querySelectorAll('.chart-switcher-inline button');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                // 根据类型找到对应的按钮并添加active类
+                const typeMap = { 'line': 0, 'bar': 1, 'pie': 2 };
+                if (typeMap[type] !== undefined && buttons[typeMap[type]]) {
+                    buttons[typeMap[type]].classList.add('active');
+                }
+            }
+        }
+    }
+
+    // 导出
+    function exportTable(cardId) {
+        const table = document.getElementById(cardId + '_table');
+        let csv = []; for (let i = 0; i < table.rows.length; i++) { let row = []; for (let j = 0; j < table.rows[i].cells.length; j++) row.push('"' + table.rows[i].cells[j].innerText + '"'); csv.push(row.join(',')); }
+        const link = document.createElement('a'); link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv.join('\n')); link.download = '数据报表.csv'; link.click();
+    }
+    function exportChart(chartId) { if (!window[chartId]) return; const link = document.createElement('a'); link.href = window[chartId].getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fff' }); link.download = '趋势图表.png'; link.click(); }
+    function exportReport(cardId) { const text = document.getElementById(cardId + '_report').innerText; const blob = new Blob([text], { type: 'application/msword' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = '数据分析报告.doc'; link.click(); URL.revokeObjectURL(link.href); }
+
+    // 存储
+    function saveCurrentSession() {
+        store.data[currentSessionId] = {
+            messages: Array.from(document.querySelectorAll('.messages .bubble')).map(m => m.outerHTML),
+            cards: Array.from(document.querySelectorAll('.result-section .query-card')).map(c => c.outerHTML)
+        };
+        saveStore();
+    }
+    function saveStore() { localStorage.setItem('CHATBI_STORE', JSON.stringify(store)); }
+    function loadStore() { const d = localStorage.getItem('CHATBI_STORE'); if (d) store = JSON.parse(d); }
+
+    // 发送示例查询
+    function sendExampleQuery(query) {
+        const input = document.getElementById('queryInput');
+        input.value = query;
+        sendMessage();
+    }
+
+    // 回车
+    document.getElementById('queryInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+    // 左侧宽度调整
+    function initResizer() {
+        const resizer = document.getElementById('resizer');
+        const chatSection = document.getElementById('chatSection');
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = chatSection.offsetWidth;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const width = startWidth + (e.clientX - startX);
+            // 限制最小宽度
+            if (width > 300) {
+                chatSection.style.width = width + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isResizing = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        });
+    }
+
+    // 初始化
+    window.onload = function () {
+        loadStore();
+        renderSessionList();
+        if (store.sessions.length === 0) newSession();
+        else switchSession(store.currentSessionId);
+        // 初始化调整大小功能
+        initResizer();
+    };
+</script>
+</body>
+</html>

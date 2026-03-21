@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>水泥工艺知识图谱 3D 可视化</title>
+<script src="https://cdn.jsdelivr.net/npm/three@0.137.5/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.137.5/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.137.5/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.137.5/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.137.5/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.137.5/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.137.5/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.137.5/examples/js/shaders/CopyShader.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
+body{background:#050a15;color:#e6edf3;overflow:hidden}
+#container{width:100vw;height:100vh}
+#info{position:fixed;top:20px;left:20px;background:rgba(10,20,40,0.85);padding:16px 20px;border-radius:12px;border:1px solid rgba(76,201,240,0.3);backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+#info div{margin:6px 0;font-size:13px;color:#a8c5e0}
+#info span{color:#4cc9f0;font-weight:600}
+#detail{position:fixed;right:20px;top:20px;width:340px;background:rgba(10,20,40,0.9);padding:20px;border-radius:14px;display:none;backdrop-filter:blur(10px);border:1px solid rgba(76,201,240,0.3);box-shadow:0 8px 32px rgba(0,0,0,0.6)}
+#detail h3{color:#4cc9f0;margin-bottom:12px;font-size:18px;text-shadow:0 0 20px rgba(76,201,240,0.5)}
+#detail p{font-size:14px;line-height:1.8;color:#b8c8d8}
+.label{color:#fff;font-size:11px;padding:4px 10px;background:rgba(10,20,40,0.8);border-radius:6px;white-space:nowrap;border:1px solid rgba(76,201,240,0.4);text-shadow:0 0 10px rgba(76,201,240,0.8)}
+.title{position:fixed;top:24px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:bold;background:linear-gradient(135deg,#4cc9f0,#72efdd,#f72585);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;letter-spacing:2px}
+.tip{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;color:#5a7a9a;background:rgba(10,20,40,0.7);padding:10px 20px;border-radius:20px;border:1px solid rgba(76,201,240,0.2)}
+.legend{position:fixed;bottom:24px;right:20px;background:rgba(10,20,40,0.85);padding:14px 18px;border-radius:10px;border:1px solid rgba(76,201,240,0.3)}
+.legend-item{display:flex;align-items:center;margin:6px 0;font-size:12px;color:#a8c5e0}
+.legend-dot{width:12px;height:12px;border-radius:50%;margin-right:10px;box-shadow:0 0 10px currentColor}
+</style>
+</head>
+<body>
+<div id="container"></div>
+<div class="title">水泥工艺知识图谱 · 3D可视化</div>
+<div id="info">
+    <div><span>●</span> 核心节点：工艺总览</div>
+    <div><span>●</span> 青色节点：工艺环节</div>
+    <div><span>●</span> 粉色节点：关键设备</div>
+    <div><span>●</span> 蓝色节点：原料材料</div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(76,201,240,0.2)">🖱️ 拖拽旋转 · 滚轮缩放 · 悬停查看详情</div>
+</div>
+<div id="detail">
+    <h3 id="nodeName"></h3>
+    <p id="nodeDesc"></p>
+</div>
+<div class="tip">水泥生产工艺：两磨一烧 · 全过程智能知识图谱</div>
+<div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#4cc9f0;color:#4cc9f0"></div>核心工艺</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#72efdd;color:#72efdd"></div>工艺环节</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f72585;color:#f72585"></div>关键设备</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#4361ee;color:#4361ee"></div>原料材料</div>
+</div>
+
+<script>
+const scene = new THREE.Scene()
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000)
+camera.position.set(0, 5, 35)
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+renderer.setSize(window.innerWidth, window.innerHeight)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setClearColor(0x050a15, 1)
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.toneMappingExposure = 1.2
+document.getElementById("container").appendChild(renderer.domElement)
+
+const composer = new THREE.EffectComposer(renderer)
+const renderPass = new THREE.RenderPass(scene, camera)
+composer.addPass(renderPass)
+
+const bloomPass = new THREE.UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    1.5, 0.4, 0.85
+)
+bloomPass.threshold = 0.1
+bloomPass.strength = 1.2
+bloomPass.radius = 0.8
+composer.addPass(bloomPass)
+
+const labelRenderer = new THREE.CSS2DRenderer()
+labelRenderer.setSize(window.innerWidth, window.innerHeight)
+labelRenderer.domElement.style.position = "fixed"
+labelRenderer.domElement.style.top = "0"
+labelRenderer.domElement.style.pointerEvents = "none"
+document.body.appendChild(labelRenderer.domElement)
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement)
+controls.enableDamping = true
+controls.dampingFactor = 0.05
+controls.minDistance = 15
+controls.maxDistance = 80
+controls.autoRotate = true
+controls.autoRotateSpeed = 0.3
+
+const ambientLight = new THREE.AmbientLight(0x404060, 0.5)
+scene.add(ambientLight)
+
+const pointLight1 = new THREE.PointLight(0x4cc9f0, 2, 100)
+pointLight1.position.set(20, 20, 20)
+scene.add(pointLight1)
+
+const pointLight2 = new THREE.PointLight(0xf72585, 1.5, 100)
+pointLight2.position.set(-20, -10, 20)
+scene.add(pointLight2)
+
+const pointLight3 = new THREE.PointLight(0x72efdd, 1, 80)
+pointLight3.position.set(0, -20, -20)
+scene.add(pointLight3)
+
+const group = new THREE.Group()
+scene.add(group)
+
+const colors = {
+    core: 0x4cc9f0,
+    process: 0x72efdd,
+    device: 0xf72585,
+    material: 0x4361ee,
+    line: 0x4cc9f0
+}
+
+const nodes = [
+    { name: "水泥生产总工艺", type: "core", desc: "水泥生产核心流程：两磨一烧，包括生料制备、熟料煅烧、水泥粉磨三大阶段", x: 0, y: 0, z: 0 },
+    { name: "原料破碎", type: "process", desc: "对石灰石、黏土、砂岩、铁矿石等原料进行破碎至合适粒度", x: -10, y: 7, z: -3 },
+    { name: "原料预均化", type: "process", desc: "通过平铺取料降低成分波动，保证原料成分稳定", x: -14, y: 3, z: -6 },
+    { name: "生料粉磨", type: "process", desc: "将配比后原料研磨至符合要求的生料粉末", x: -16, y: -3, z: -2 },
+    { name: "生料均化", type: "process", desc: "使生料成分均匀稳定，为煅烧提供基础", x: -12, y: -8, z: 3 },
+    { name: "预热分解", type: "process", desc: "五级旋风预热+分解炉，完成碳酸盐分解", x: 0, y: -8, z: 2 },
+    { name: "回转窑煅烧", type: "process", desc: "1450℃左右高温煅烧生成水泥熟料", x: 6, y: -4, z: 0 },
+    { name: "熟料冷却", type: "process", desc: "高温熟料快速冷却，提高熟料强度", x: 10, y: -8, z: -3 },
+    { name: "熟料储存", type: "process", desc: "熟料储存均化，稳定质量", x: 14, y: -4, z: -5 },
+    { name: "水泥粉磨", type: "process", desc: "熟料+石膏+混合材共同粉磨为水泥成品", x: 12, y: 4, z: 0 },
+    { name: "水泥储存", type: "process", desc: "水泥成品储存，防止受潮", x: 16, y: 8, z: 3 },
+    { name: "水泥包装发运", type: "process", desc: "袋装/散装水泥装车外运", x: 10, y: 10, z: 0 },
+    { name: "石灰石", type: "material", desc: "主要钙质原料，CaO来源，占原料80%以上", x: -20, y: 8, z: 4 },
+    { name: "黏土", type: "material", desc: "提供Al₂O₃、SiO₂，调节原料成分", x: -22, y: 5, z: -2 },
+    { name: "石膏", type: "material", desc: "调节水泥凝结时间，掺量3-5%", x: 20, y: 5, z: 3 },
+    { name: "混合材", type: "material", desc: "矿渣、粉煤灰等，降低成本改善性能", x: 22, y: 9, z: -2 },
+    { name: "破碎机", type: "device", desc: "颚式、锤式、反击式破碎机，粗碎中碎细碎", x: -24, y: 8, z: 0 },
+    { name: "立磨", type: "device", desc: "生料/水泥粉磨核心设备，高效节能", x: -22, y: -3, z: 0 },
+    { name: "回转窑", type: "device", desc: "煅烧熟料核心主机设备，Φ4.8×72m", x: 4, y: -12, z: 0 },
+    { name: "篦冷机", type: "device", desc: "熟料冷却专用设备，第四代技术", x: 10, y: -12, z: 0 },
+    { name: "球磨机", type: "device", desc: "水泥终粉磨设备，Φ4.2×13m", x: 22, y: 4, z: 0 }
+]
+
+const meshes = []
+const labelObjs = []
+const glowMeshes = []
+
+function createGlowMaterial(color) {
+    return new THREE.ShaderMaterial({
+        uniforms: {
+            glowColor: { value: new THREE.Color(color) },
+            viewVector: { value: camera.position }
+        },
+        vertexShader: `
+            uniform vec3 viewVector;
+            varying float intensity;
+            void main() {
+                vec3 vNormal = normalize(normalMatrix * normal);
+                vec3 vNormel = normalize(normalMatrix * viewVector);
+                intensity = pow(0.7 - dot(vNormal, vNormel), 2.0);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform vec3 glowColor;
+            varying float intensity;
+            void main() {
+                vec3 glow = glowColor * intensity;
+                gl_FragColor = vec4(glow, intensity * 0.8);
+            }
+        `,
+        side: THREE.FrontSide,
+        blending: THREE.AdditiveBlending,
+        transparent: true
+    })
+}
+
+nodes.forEach((node, i) => {
+    const color = node.type === "core" ? colors.core : 
+                  node.type === "process" ? colors.process : 
+                  node.type === "device" ? colors.device : colors.material
+    const radius = node.type === "core" ? 1.8 : node.type === "device" ? 1.0 : 0.85
+    
+    const geo = new THREE.SphereGeometry(radius, 32, 32)
+    const mat = new THREE.MeshPhongMaterial({
+        color: color,
+        emissive: color,
+        emissiveIntensity: 0.3,
+        shininess: 100,
+        transparent: true,
+        opacity: 0.95
+    })
+    const mesh = new THREE.Mesh(geo, mat)
+    mesh.position.set(node.x, node.y, node.z)
+    mesh.userData = { index: i, name: node.name, desc: node.desc, baseColor: color }
+    group.add(mesh)
+    meshes.push(mesh)
+
+    const glowGeo = new THREE.SphereGeometry(radius * 1.5, 32, 32)
+    const glowMat = createGlowMaterial(color)
+    const glowMesh = new THREE.Mesh(glowGeo, glowMat)
+    glowMesh.position.copy(mesh.position)
+    group.add(glowMesh)
+    glowMeshes.push(glowMesh)
+
+    const coreGeo = new THREE.SphereGeometry(radius * 0.3, 16, 16)
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 })
+    const coreMesh = new THREE.Mesh(coreGeo, coreMat)
+    coreMesh.position.copy(mesh.position)
+    group.add(coreMesh)
+
+    const div = document.createElement("div")
+    div.className = "label"
+    div.textContent = node.name
+    const label = new THREE.CSS2DObject(div)
+    label.position.set(node.x, node.y + radius + 1.2, node.z)
+    group.add(label)
+    labelObjs.push(label)
+})
+
+const relations = [
+    [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [0, 8], [0, 9], [0, 10], [0, 11],
+    [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11],
+    [12, 1], [13, 1], [14, 9], [15, 9], [12, 3], [13, 3], [16, 1], [17, 3], [17, 9], [18, 6], [19, 7], [20, 9]
+]
+
+const flowLines = []
+
+relations.forEach(([a, b]) => {
+    const start = new THREE.Vector3(nodes[a].x, nodes[a].y, nodes[a].z)
+    const end = new THREE.Vector3(nodes[b].x, nodes[b].y, nodes[b].z)
+    
+    const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5)
+    const distance = start.distanceTo(end)
+    mid.y += distance * 0.1
+    
+    const curve = new THREE.QuadraticBezierCurve3(start, mid, end)
+    const points = curve.getPoints(50)
+    const geo = new THREE.BufferGeometry().setFromPoints(points)
+    
+    const mat = new THREE.LineBasicMaterial({
+        color: colors.line,
+        transparent: true,
+        opacity: 0.4,
+        linewidth: 1
+    })
+    const line = new THREE.Line(geo, mat)
+    group.add(line)
+
+    const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.03, 8, false)
+    const tubeMat = new THREE.MeshBasicMaterial({
+        color: colors.line,
+        transparent: true,
+        opacity: 0.3
+    })
+    const tube = new THREE.Mesh(tubeGeo, tubeMat)
+    group.add(tube)
+
+    const flowGeo = new THREE.TubeGeometry(curve, 32, 0.05, 8, false)
+    const flowMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.6
+    })
+    const flowMesh = new THREE.Mesh(flowGeo, flowMat)
+    flowMesh.userData = { curve: curve, progress: Math.random() }
+    group.add(flowMesh)
+    flowLines.push(flowMesh)
+})
+
+const particleCount = 500
+const particleGeo = new THREE.BufferGeometry()
+const particlePositions = new Float32Array(particleCount * 3)
+const particleSizes = new Float32Array(particleCount)
+
+for (let i = 0; i < particleCount; i++) {
+    particlePositions[i * 3] = (Math.random() - 0.5) * 100
+    particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 60
+    particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 60
+    particleSizes[i] = Math.random() * 2 + 0.5
+}
+
+particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3))
+particleGeo.setAttribute('size', new THREE.BufferAttribute(particleSizes, 1))
+
+const particleMat = new THREE.PointsMaterial({
+    color: 0x4cc9f0,
+    size: 0.3,
+    transparent: true,
+    opacity: 0.4,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
+})
+
+const particles = new THREE.Points(particleGeo, particleMat)
+scene.add(particles)
+
+const raycaster = new THREE.Raycaster()
+const mouse = new THREE.Vector2()
+const detail = document.getElementById("detail")
+const nodeName = document.getElementById("nodeName")
+const nodeDesc = document.getElementById("nodeDesc")
+let hoveredMesh = null
+
+window.addEventListener("mousemove", e => {
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+})
+
+function updateHover() {
+    raycaster.setFromCamera(mouse, camera)
+    const intersects = raycaster.intersectObjects(meshes)
+    
+    if (intersects.length > 0) {
+        const obj = intersects[0].object
+        if (hoveredMesh !== obj) {
+            if (hoveredMesh) {
+                hoveredMesh.material.emissiveIntensity = 0.3
+                hoveredMesh.scale.set(1, 1, 1)
+            }
+            hoveredMesh = obj
+            hoveredMesh.material.emissiveIntensity = 0.8
+            hoveredMesh.scale.set(1.3, 1.3, 1.3)
+            
+            nodeName.textContent = obj.userData.name
+            nodeDesc.textContent = obj.userData.desc
+            detail.style.display = "block"
+        }
+    } else {
+        if (hoveredMesh) {
+            hoveredMesh.material.emissiveIntensity = 0.3
+            hoveredMesh.scale.set(1, 1, 1)
+            hoveredMesh = null
+        }
+        detail.style.display = "none"
+    }
+}
+
+window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    composer.setSize(window.innerWidth, window.innerHeight)
+    labelRenderer.setSize(window.innerWidth, window.innerHeight)
+})
+
+let time = 0
+
+function animate() {
+    requestAnimationFrame(animate)
+    time += 0.016
+    
+    controls.update()
+    
+    meshes.forEach((mesh, i) => {
+        const scale = 1 + Math.sin(time * 2 + i * 0.5) * 0.05
+        if (mesh !== hoveredMesh) {
+            mesh.scale.set(scale, scale, scale)
+        }
+    })
+    
+    glowMeshes.forEach((glow, i) => {
+        glow.material.uniforms.viewVector.value = new THREE.Vector3().subVectors(
+            camera.position, glow.position
+        )
+    })
+    
+    flowLines.forEach(flow => {
+        flow.userData.progress += 0.003
+        if (flow.userData.progress > 1) flow.userData.progress = 0
+    })
+    
+    const positions = particles.geometry.attributes.position.array
+    for (let i = 0; i < particleCount; i++) {
+        positions[i * 3 + 1] += 0.02
+        if (positions[i * 3 + 1] > 30) {
+            positions[i * 3 + 1] = -30
+        }
+    }
+    particles.geometry.attributes.position.needsUpdate = true
+    particles.rotation.y += 0.0002
+    
+    pointLight1.position.x = Math.sin(time * 0.5) * 25
+    pointLight1.position.z = Math.cos(time * 0.5) * 25
+    pointLight2.position.x = Math.cos(time * 0.3) * 20
+    pointLight2.position.z = Math.sin(time * 0.3) * 20
+    
+    updateHover()
+    
+    composer.render()
+    labelRenderer.render(scene, camera)
+}
+
+animate()
+</script>
+</body>
+</html>

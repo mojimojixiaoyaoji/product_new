@@ -1,0 +1,168 @@
+@startuml 元数据关系图谱
+
+' 实体定义
+entity "数据目录 (DataCatalog)" as DataCatalog {
+  + catalogId: String (PK)
+  + catalogName: String
+  + parentCatalog: String
+  + catalogDescription: Text
+  + createTime: DateTime
+  + updateTime: DateTime
+}
+
+entity "工厂 (Factory)" as Factory {
+  + factoryId: String (PK)
+  + factoryName: String
+  + factoryShortName: String
+  + parentFactory: String
+  + createTime: DateTime
+  + updateTime: DateTime
+  + isDeleted: Boolean
+}
+
+entity "数据表 (Table)" as Table {
+  + tableId: String (PK)
+  + tableName: String
+  + tableAlias: String
+  + catalogId: String
+  + catalogName: String
+  + fullCataloguePath: String
+  + tableType: String
+  + updatePeroid: String
+  + dataDomain: String
+  + sensitiveLevel: String
+  + tableDescription: Text
+  + factoryId: String
+  + factoryName: String
+  + responsibleDepartment: String
+  + createTime: DateTime
+  + updateTime: DateTime
+  + tags: Array
+  + isDeleted: Boolean
+}
+
+entity "数据字段 (Column)" as Column {
+  + columnId: String (PK)
+  + columnName: String
+  + columnAlias: String
+  + dataType: String
+  + dataLength: String
+  + dataScale: String
+  + defaultValue: String
+  + isPrimaryKey: Boolean
+  + isUnique: Boolean
+  + isNullAble: Boolean
+  + isSensitive: Boolean
+  + isAssociationEnums: Boolean
+  + sensitiveLevel: String
+  + columnComment: Text
+  + synonyms: Array
+  + columnDescription: Text
+  + enumValues: Array
+  + tags: Array
+  + createTime: DateTime
+  + updateTime: DateTime
+  + isDeleted: Boolean
+}
+
+' 关系定义
+' 目录层级包含
+DataCatalog "1" -- "*" DataCatalog : 目录层级包含
+
+' 目录挂载表
+DataCatalog "1" -- "*" Table : 目录挂载表
+
+' 表包含字段
+Table "1" -- "*" Column : 表包含字段
+
+' 表依赖于表
+Table "*" -- "*" Table : 依赖于
+
+' 字段映射到字段
+Column "*" -- "*" Column : 映射到
+
+' 工厂层级包含
+Factory "1" -- "*" Factory : 工厂层级包含
+
+' 表归属工厂
+Table "*" -- "1" Factory : 归属
+
+' 表关联查询
+Table "*" -- "*" Table : 关联查询
+
+' 表合并
+Table "*" -- "*" Table : 合并
+
+' 关系属性说明
+note right of DataCatalog
+  目录层级包含关系属性：
+  - relationId（唯一）
+  - createTime
+  - updateTime
+  - isDeleted（默认false）
+end note
+
+note right of Table
+  表包含字段关系属性：
+  - relationId（唯一）
+  - columnOrder
+  - createTime
+  - updateTime
+  - isDeleted（默认false）
+end note
+
+note right of Table
+  表依赖于关系属性：
+  - relationId（唯一）
+  - dependencyType（强/弱）
+  - createTime
+  - updateTime
+  - isDeleted（默认false）
+end note
+
+note right of Column
+  字段映射到关系属性：
+  - relationId（唯一）
+  - mappingType（一对一/一对多/多对一/多对多）
+  - createTime
+  - updateTime
+  - isDeleted（默认false）
+end note
+
+note right of Factory
+  工厂层级包含关系属性：
+  - relationId（唯一）
+  - createTime
+  - updateTime
+  - isDeleted（默认false）
+end note
+
+note right of Table
+  表归属关系属性：
+  - relationId（唯一）
+  - createTime
+  - updateTime
+  - isDeleted（默认false）
+end note
+
+note right of Table
+  表关联查询关系属性：
+  - relationId（唯一）
+  - joinType（内连接/左连接等）
+  - joinCondition
+  - createTime
+  - updateTime
+  - isDeleted（默认false）
+end note
+
+note right of Table
+  表合并关系属性：
+  - relationId（唯一）
+  - unionType（union/union all）
+  - fieldMatch
+  - createTime
+  - updateTime
+  - isDeleted（默认false）
+end note
+
+@enduml

@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DCS数据采集智能查询助手 - 郑童童</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    }
+
+    :root {
+      --primary: #D9000F;
+      --primary-disabled: #FF9494;
+      --primary-hover: #C0000D;
+      --primary-active: #A0000B;
+      --success: #00B42A;
+      --warning: #FF7D00;
+      --danger: #F53F3F;
+      --text-main: #1D2129;
+      --text-secondary: #4E5969;
+      --text-disabled: #86909C;
+      --bg-main: #FFFFFF;
+      --bg-secondary: #F7F8FA;
+      --border: #E5E6EB;
+      --nav-active-bg: #FFF2F2;
+      --btn-secondary-hover: #FFE6E6;
+      --table-hover: #FFE6E6;
+      --input-focus-shadow: rgba(217, 0, 15, 0.2);
+    }
+
+    body {
+      background: var(--bg-secondary);
+      color: var(--text-main);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .page {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 300px;
+      background: var(--bg-main);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, var(--bg-main) 0%, var(--btn-secondary-hover) 100%);
+    }
+
+    .sidebar-header i {
+      color: var(--primary);
+      font-size: 24px;
+    }
+
+    .nav-item {
+      padding: 14px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      border-left: 4px solid transparent;
+      position: relative;
+    }
+
+    .nav-item:hover {
+      background: var(--btn-secondary-hover);
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: var(--nav-active-bg);
+      color: var(--primary);
+      font-weight: 500;
+      border-left: 4px solid var(--primary);
+      box-shadow: inset 4px 0 0 var(--primary);
+    }
+
+    .chat-history {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .chat-history h3 {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .history-item {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .history-item:hover {
+      background: var(--btn-secondary-hover);
+      color: var(--primary);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(217, 0, 15, 0.1);
+    }
+
+    .resizer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+      cursor: col-resize;
+      background: transparent;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+
+    .resizer:hover {
+      background: var(--primary);
+      opacity: 0.5;
+    }
+
+    .sidebar {
+      position: relative;
+      min-width: 200px;
+      max-width: 400px;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .main-page {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+
+    .chat-container {
+      flex: 1;
+      padding: 32px 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, #f0f0f0 100%);
+    }
+
+    .message {
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message-user {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .message-bot {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .message-bubble {
+      padding: 14px 18px;
+      border-radius: 16px;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .message-user .message-bubble {
+      background: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-bot .message-bubble {
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-bubble:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .message-time {
+      font-size: 11px;
+      color: var(--text-disabled);
+      margin-top: 4px;
+    }
+
+    .message-user .message-time {
+      text-align: right;
+    }
+
+    .message-bot .message-time {
+      text-align: left;
+    }
+
+    .card {
+      background: var(--bg-main);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 24px;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--primary-hover) 100%);
+      border-radius: 16px 16px 0 0;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin: 20px 0;
+    }
+
+    .stat-card {
+      padding: 24px;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--primary);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      border-color: var(--primary);
+    }
+
+    .stat-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin: 4px 0;
+    }
+
+    .stat-unit {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .chart-box {
+      width: 100%;
+      height: 300px;
+      margin: 16px 0;
+      min-height: 300px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 14px;
+    }
+
+    .table th, .table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      height: 48px;
+    }
+
+    .table th {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .table tr:hover {
+      background: var(--table-hover);
+    }
+
+    .input-bar {
+      padding: 16px 24px;
+      background: var(--bg-main);
+      border-top: 1px solid var(--border);
+    }
+
+    .quick-questions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .quick-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: var(--btn-secondary-hover);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--primary);
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .quick-btn:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(217, 0, 15, 0.2);
+    }
+
+    .input-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .input-container {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      border: 2px solid var(--primary);
+      border-radius: 24px;
+      padding: 4px 12px;
+      background: white;
+    }
+
+    .textarea-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 56px;
+    }
+
+    textarea {
+      flex: 1;
+      padding: 0;
+      border: none;
+      resize: none;
+      min-height: 56px;
+      max-height: 120px;
+      outline: none;
+      font-size: 14px;
+      background: transparent;
+      text-align: left;
+    }
+
+    textarea::placeholder {
+      text-align: left;
+      padding-left: 8px;
+      padding-top: 16px;
+      display: block;
+    }
+
+    .send-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      margin-left: 8px;
+      font-size: 20px;
+    }
+
+    .send-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .send-btn:active {
+      background: var(--primary-active);
+    }
+
+    .send-btn:disabled {
+      background: var(--primary-disabled);
+      cursor: not-allowed;
+    }
+
+    .voice-btn {
+      width: 56px;
+      height: 56px;
+      border: none;
+      background: transparent;
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+      margin-right: 8px;
+      font-size: 24px;
+    }
+
+    .voice-btn:hover {
+      color: var(--primary-hover);
+    }
+
+    .voice-btn:active {
+      color: var(--primary-active);
+    }
+
+    .voice-btn.recording {
+      color: var(--primary);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(217, 0, 15, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(217, 0, 15, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(217, 0, 15, 0);
+      }
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chart-switch {
+      display: flex;
+      gap: 6px;
+    }
+
+    .chart-switch button {
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .chart-switch button.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 180px 20px 60px;
+      color: var(--text-disabled);
+      margin-top: 60px;
+    }
+
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 12px;
+      color: var(--border);
+    }
+
+    .analysis-item {
+      padding: 8px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .analysis-item b {
+      color: var(--text-main);
+    }
+
+    .chart-switch {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chart-switch button {
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-switch button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .chart-switch button.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 2px 6px rgba(217, 0, 15, 0.2);
+    }
+
+    /* PRD按钮样式 */
+    .prd-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 16px;
+      background: white;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(217, 0, 15, 0.2);
+      transition: all 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .prd-btn i {
+      color: var(--primary);
+    }
+
+    .prd-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(217, 0, 15, 0.3);
+    }
+
+    .prd-btn:hover i {
+      color: white;
+    }
+
+    /* 模态弹窗样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 1000px;
+      max-height: 80vh;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: var(--text-main);
+      font-size: 20px;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: var(--primary);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 0;
+    }
+
+    .prd-content {
+      padding: 0 20px 20px;
+    }
+
+    .prd-content h1 {
+      font-size: 24px;
+      color: var(--text-main);
+      margin-bottom: 20px;
+    }
+
+    .prd-content h2 {
+      font-size: 20px;
+      color: var(--text-main);
+      margin: 30px 0 15px;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 8px;
+    }
+
+    .prd-content h3 {
+      font-size: 18px;
+      color: var(--text-main);
+      margin: 20px 0 10px;
+    }
+
+    .prd-content h4 {
+      font-size: 16px;
+      color: var(--text-main);
+      margin: 15px 0 8px;
+    }
+
+    .prd-content p {
+      line-height: 1.6;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .prd-content ul,
+    .prd-content ol {
+      margin-bottom: 15px;
+      padding-left: 24px;
+    }
+
+    .prd-content li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    .prd-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+
+    .prd-content table th,
+    .prd-content table td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .prd-content table th {
+      background-color: var(--bg-secondary);
+      font-weight: bold;
+      color: var(--text-main);
+    }
+
+    .prd-content table tr:nth-child(even) {
+      background-color: var(--bg-secondary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <i class="fa fa-robot"></i> DCS数据智能分析助手
+    </div>
+    <div class="nav-item active" onclick="showPage('chat')">
+      <i class="fa fa-comments"></i> 智能对话查询
+    </div>
+    <div class="nav-item" onclick="showPage('overview')">
+      <i class="fa fa-line-chart"></i> 数据总览
+    </div>
+    <div class="nav-item" onclick="showPage('detail')">
+      <i class="fa fa-table"></i> 明细查询
+    </div>
+    <div class="chat-history">
+      <h3>历史查询</h3>
+      <div class="history-item">查询四川华蓥西南水泥采集量</div>
+      <div class="history-item">查询北方区域近30天数据</div>
+      <div class="history-item">分析行业云采集趋势</div>
+      <div class="history-item">近半年波动原因分析</div>
+      <div class="history-item">查询华东区域工厂完整性</div>
+    </div>
+    <div class="resizer" id="sidebarResizer"></div>
+  </div>
+
+  <div class="main">
+    <!-- PRD按钮 -->
+    <div class="prd-btn" onclick="openPRDModal()">
+      <i class="fa fa-file-text-o"></i> PRD
+    </div>
+    <!-- 智能对话页面 -->
+    <div id="pageChat" class="main-page" style="display:flex;">
+      <div class="chat-container" id="chatContainer">
+        <div class="empty-state">
+          <i class="fa fa-robot"></i>
+          <div>你好，我是 DCS 数据智能分析助手</div>
+          <div style="margin-top:8px;font-size:13px;">支持：今日/昨日/近7天/近30天/近半年趋势、波动分析、异常诊断、区域对比、工厂明细</div>
+          <div style="margin-top:16px;display:flex;flex-wrap:gap;gap:8px;justify-content:center;">
+            <button class="quick-btn" onclick="queryInput.value='查询DCS数据采集总量';sendMessage();">查询DCS数据采集总量</button>
+            <button class="quick-btn" onclick="queryInput.value='查询北方区域DCS采集量';sendMessage();">查询北方区域DCS采集量</button>
+            <button class="quick-btn" onclick="queryInput.value='查询华蓥DCS数据采集情况';sendMessage();">查询华蓥DCS数据采集情况</button>
+            <button class="quick-btn" onclick="queryInput.value='查看近半年趋势';sendMessage();">查看近半年趋势</button>
+            <button class="quick-btn" onclick="queryInput.value='近半年波动原因分析';sendMessage();">近半年波动原因分析</button>
+            <button class="quick-btn" onclick="queryInput.value='各区域采集量对比';sendMessage();">各区域采集量对比</button>
+          </div>
+        </div>
+      </div>
+      <div class="input-bar">
+        <div class="input-wrapper">
+          <div class="input-container">
+            <button class="voice-btn" id="voiceBtn"><i class="fa fa-microphone"></i></button>
+            <div class="textarea-wrapper">
+              <textarea id="queryInput" placeholder="请输入查询：华蓥近半年趋势 | 行业云波动分析 | 昨日采集量 | 区域对比"></textarea>
+            </div>
+            <button class="send-btn" id="sendBtn"><i class="fa fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 数据总览页面 -->
+    <div id="pageOverview" class="main-page" style="padding:24px;overflow-y:auto;">
+      <div style="font-size:20px;font-weight:600;margin-bottom:20px;">数据总览 / DCS采集数据统计</div>
+      <div class="card-grid" style="margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-label">行业云今日采集总量</div>
+          <div class="stat-value">68.81</div>
+          <div class="stat-unit">亿条</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">行业云累计采集总量</div>
+          <div class="stat-value">28642.31</div>
+          <div class="stat-unit">亿条</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">整体数据完整性</div>
+          <div class="stat-value" style="color:var(--success)">99.74%</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="section-title">
+          <span>行业云近半年采集趋势</span>
+          <div class="chart-switch">
+            <button class="active" onclick="switchOverviewChart('bar')">柱图</button>
+            <button onclick="switchOverviewChart('line')">线图</button>
+            <button onclick="switchOverviewChart('pie')">饼图</button>
+          </div>
+        </div>
+        <div id="overviewChart" class="chart-box"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">
+          <span>各区域采集量统计</span>
+          <div class="chart-switch">
+            <button class="active" onclick="switchRegionChart('bar')">柱图</button>
+            <button onclick="switchRegionChart('line')">线图</button>
+            <button onclick="switchRegionChart('pie')">饼图</button>
+          </div>
+        </div>
+        <div id="regionChart" class="chart-box"></div>
+      </div>
+    </div>
+
+    <!-- 明细查询页面 -->
+    <div id="pageDetail" class="main-page" style="padding:24px;overflow-y:auto;">
+      <div style="font-size:20px;font-weight:600;margin-bottom:20px;">明细查询 / DCS采集数据明细</div>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <input type="date" value="2026-03-19" style="padding:0 12px;border:1px solid var(--border);border-radius:4px;outline:none;height:40px;">
+        <input type="text" placeholder="输入工厂名称" style="padding:0 12px;border:1px solid var(--border);border-radius:4px;outline:none;height:40px;">
+        <button style="padding:0 16px;background:var(--primary);color:#fff;border:none;border-radius:4px;cursor:pointer;height:40px;">查询</button>
+        <button style="padding:0 16px;background:var(--bg-secondary);color:var(--text-main);border:none;border-radius:4px;cursor:pointer;height:40px;">重置</button>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="section-title" style="margin:0;">采集数据明细列表</div>
+          <div style="color:var(--text-secondary);font-size:13px;">共 2186 条记录</div>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>工厂名称</th>
+              <th>数据总量（万条）</th>
+              <th>完整性</th>
+              <th>准确性</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2026-03-19</td>
+              <td>四川华蓥西南水泥</td>
+              <td>1263.5</td>
+              <td>99.97%</td>
+              <td>99.96%</td>
+              <td><span style="color:var(--success);">正常</span></td>
+            </tr>
+            <tr>
+              <td>2026-03-19</td>
+              <td>河北石家庄北方水泥</td>
+              <td>982.4</td>
+              <td>99.92%</td>
+              <td>99.90%</td>
+              <td><span style="color:var(--success);">正常</span></td>
+            </tr>
+            <tr>
+              <td>2026-03-19</td>
+              <td>江苏南京华东建材</td>
+              <td>875.1</td>
+              <td>98.12%</td>
+              <td>97.88%</td>
+              <td><span style="color:var(--warning);">待核查</span></td>
+            </tr>
+            <tr>
+              <td>2026-03-19</td>
+              <td>广东广州华南水泥</td>
+              <td>756.8</td>
+              <td>99.85%</td>
+              <td>99.83%</td>
+              <td><span style="color:var(--success);">正常</span></td>
+            </tr>
+            <tr>
+              <td>2026-03-19</td>
+              <td>云南昆明西南建材</td>
+              <td>689.3</td>
+              <td>99.76%</td>
+              <td>99.74%</td>
+              <td><span style="color:var(--success);">正常</span></td>
+            </tr>
+            <tr>
+              <td>2026-03-19</td>
+              <td>陕西西安西北水泥</td>
+              <td>542.6</td>
+              <td>99.68%</td>
+              <td>99.65%</td>
+              <td><span style="color:var(--success);">正常</span></td>
+            </tr>
+            <tr>
+              <td>2026-03-19</td>
+              <td>辽宁沈阳东北建材</td>
+              <td>487.2</td>
+              <td>99.59%</td>
+              <td>99.57%</td>
+              <td><span style="color:var(--success);">正常</span></td>
+            </tr>
+            <tr>
+              <td>2026-03-19</td>
+              <td>山东济南北方分厂</td>
+              <td>821.7</td>
+              <td>99.88%</td>
+              <td>99.86%</td>
+              <td><span style="color:var(--success);">正常</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentOverviewType = 'bar';
+  let currentRegionType = 'bar';
+  let trendChartInstance = null;
+
+  // 页面切换
+  function showPage(page) {
+    document.querySelectorAll('.main-page').forEach(el => el.style.display = 'none');
+    const target = document.getElementById(`page${page.charAt(0).toUpperCase() + page.slice(1)}`);
+    if(target) target.style.display = 'flex';
+    document.querySelectorAll('.nav-item').forEach((item, i) => {
+      item.classList.remove('active');
+      if((page === 'chat' && i === 0) || (page === 'overview' && i === 1) || (page === 'detail' && i === 2)) {
+        item.classList.add('active');
+      }
+    });
+  }
+
+  // 初始化总览图表（行业数据）
+  function initOverviewCharts() {
+    // 近半年趋势（你提供的月度数据）
+    const xData = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'];
+    const yData = [262.1198, 278.8322, 363.3447, 538.6910, 445.4942, 309.0835];
+    const chart1 = echarts.init(document.getElementById('overviewChart'));
+    chart1.setOption(getChartOption(xData, yData, currentOverviewType, '亿条'));
+    window.addEventListener('resize', () => chart1.resize());
+
+    // 区域采集分布（按你提供的数据）
+    const xData2 = ['祁连山', '中南', '西南', '南方', '江西', '中联', '新疆', '河南', '云贵', '北方', '石膏山东', '磊石POC'];
+    const yData2 = [6493.58, 5452.10, 5190.77, 2863.87, 2397.66, 1804.52, 1574.77, 1074.67, 997.71, 280.10, 41.44, 8.02];
+    const chart2 = echarts.init(document.getElementById('regionChart'));
+    chart2.setOption(getChartOption(xData2, yData2, currentRegionType, '亿条'));
+    window.addEventListener('resize', () => chart2.resize());
+  }
+
+  // 切换总览图表
+  function switchOverviewChart(type) {
+    currentOverviewType = type;
+    const btns = document.querySelectorAll('.chart-switch')[0].querySelectorAll('button');
+    btns.forEach((b, i) => b.classList.toggle('active', i === ['bar','line','pie'].indexOf(type)));
+    initOverviewCharts();
+  }
+
+  // 切换区域图表
+  function switchRegionChart(type) {
+    currentRegionType = type;
+    const btns = document.querySelectorAll('.chart-switch')[1].querySelectorAll('button');
+    btns.forEach((b, i) => b.classList.toggle('active', i === ['bar','line','pie'].indexOf(type)));
+    initOverviewCharts();
+  }
+
+  // 统一图表配置
+  function getChartOption(xData, yData, type, name) {
+    const base = {
+      tooltip: { trigger: 'axis', formatter: '{b} : {c} '+name },
+      grid: { left: 20, right: 20, top: 30, bottom: 20 },
+      xAxis: type !== 'pie' ? { type: 'category', data: xData } : undefined,
+      yAxis: type !== 'pie' ? { type: 'value', name } : undefined,
+      series: []
+    };
+    if (type === 'bar') base.series.push({ type: 'bar', data: yData, itemStyle: { color: '#D9000F' } });
+    if (type === 'line') base.series.push({ type: 'line', data: yData, itemStyle: { color: '#D9000F' }, lineStyle: { width: 3 }, smooth: true });
+    if (type === 'pie') base.series.push({ type: 'pie', radius: '60%', data: xData.map((n, i) => ({ name: n, value: yData[i] })) });
+    return base;
+  }
+
+  // 初始化趋势图表
+  function initTrendChart() {
+    const xData = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'];
+    const yData = [262.1198, 278.8322, 363.3447, 538.6910, 445.4942, 309.0835];
+    const chartDom = document.getElementById('trendChart');
+    if (chartDom) {
+      trendChartInstance = echarts.init(chartDom);
+      trendChartInstance.setOption(getChartOption(xData, yData, 'bar', '亿条'));
+      window.addEventListener('resize', () => trendChartInstance.resize());
+    }
+  }
+
+  // 切换趋势图表
+  function switchTrendChart(type) {
+    const xData = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'];
+    const yData = [262.1198, 278.8322, 363.3447, 538.6910, 445.4942, 309.0835];
+    if (trendChartInstance) {
+      trendChartInstance.setOption(getChartOption(xData, yData, type, '亿条'));
+    }
+  }
+
+  // 切换趋势图表（按ID）
+  function switchTrendChartById(chartId, type) {
+    const xData = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'];
+    const yData = [262.1198, 278.8322, 363.3447, 538.6910, 445.4942, 309.0835];
+    const chartDom = document.getElementById(chartId);
+    if (chartDom) {
+      const chart = echarts.getInstanceByDom(chartDom);
+      if (chart) {
+        chart.setOption(getChartOption(xData, yData, type, '亿条'));
+      }
+    }
+  }
+
+  const obs = new MutationObserver(() => {
+    if(document.getElementById('pageOverview').style.display === 'flex') {
+      setTimeout(initOverviewCharts, 100);
+    }
+  });
+  obs.observe(document.getElementById('pageOverview'), { attributes: true, attributeFilter: ['style'] });
+
+  // 对话功能
+  const chatContainer = document.getElementById('chatContainer');
+  const queryInput = document.getElementById('queryInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  function sendMessage() {
+    const text = queryInput.value.trim();
+    if (!text) return;
+    addMessage('user', text);
+    queryInput.value = '';
+    setTimeout(() => botReply(text), 800);
+  }
+
+  sendBtn.onclick = sendMessage;
+  queryInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  document.querySelectorAll('.quick-btn').forEach(btn => {
+    btn.onclick = () => { queryInput.value = btn.textContent; sendMessage(); };
+  });
+
+  function addMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = `message message-${role}`;
+    div.innerHTML = `<div class="message-bubble">${text}</div>`;
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // 初始化图表 - 使用setTimeout确保DOM完全渲染
+    setTimeout(() => {
+      const chartDoms = div.querySelectorAll('.chart-box');
+      chartDoms.forEach(chartDom => {
+        if (chartDom.id) {
+          const chartInstance = echarts.getInstanceByDom(chartDom);
+          if (!chartInstance) {
+            const xData = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'];
+            const yData = [262.1198, 278.8322, 363.3447, 538.6910, 445.4942, 309.0835];
+            const chart = echarts.init(chartDom);
+            chart.setOption(getChartOption(xData, yData, 'bar', '亿条'));
+            window.addEventListener('resize', () => chart.resize());
+          }
+        }
+      });
+    }, 50);
+  }
+
+  // 智能回复（业务数据）
+  function botReply(query) {
+    const loading = document.createElement('div');
+    loading.className = 'message message-bot';
+    loading.innerHTML = `<div class="message-bubble"><i class="fa fa-spinner fa-spin"></i> 正在分析业务数据...</div>`;
+    chatContainer.appendChild(loading);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    setTimeout(() => {
+      chatContainer.removeChild(loading);
+      let result = '';
+      const q = query || '';
+
+      // 查询DCS数据采集总量 → 行业云数据
+      if (q.includes('总量') || q.includes('dcs数据采集总量')) {
+        const chartId = 'trendChart_' + Date.now();
+        result = `
+        <div class="card">
+          <div class="section-title">
+            <span>行业云 DCS 数据采集总量统计</span>
+            <div style="display:flex;gap:16px;">
+              <i class="fa fa-download" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="downloadResult(this)"></i>
+              <i class="fa fa-share-alt" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="shareResult(this)"></i>
+            </div>
+          </div>
+          <div class="card-grid">
+            <div class="stat-card"><div class="stat-label">今日采集总量</div><div class="stat-value">68.81</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">近7天日均</div><div class="stat-value">62.35</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">近30天总量</div><div class="stat-value">1856.42</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">累计采集总量</div><div class="stat-value">28642.31</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">月度平均采集</div><div class="stat-value">420.16</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">整体数据完整性</div><div class="stat-value" style="color:var(--success)">99.74%</div></div>
+          </div>
+          <div class="section-title">
+            <span>行业云近半年采集趋势</span>
+            <div class="chart-switch">
+              <button class="active" onclick="switchTrendChartById('${chartId}', 'bar')">柱图</button>
+              <button onclick="switchTrendChartById('${chartId}', 'line')">线图</button>
+              <button onclick="switchTrendChartById('${chartId}', 'pie')">饼图</button>
+            </div>
+          </div>
+          <div id="${chartId}" class="chart-box"></div>
+        </div>`;
+      } else if (q.includes('半年') || q.includes('趋势')) {
+        const chartId = 'trendChart_' + Date.now();
+        result = `
+        <div class="card">
+          <div class="section-title">
+            <span>行业云 / 近半年采集趋势分析</span>
+            <div style="display:flex;gap:16px;">
+              <i class="fa fa-download" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="downloadResult(this)"></i>
+              <i class="fa fa-share-alt" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="shareResult(this)"></i>
+            </div>
+          </div>
+          <div class="card-grid">
+            <div class="stat-card"><div class="stat-label">近半年日均</div><div class="stat-value">14.18</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">最高单月</div><div class="stat-value">538.69</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">最低单月</div><div class="stat-value">262.12</div><div class="stat-unit">亿条</div></div>
+          </div>
+          <div class="section-title">
+            <span>近半年趋势</span>
+            <div class="chart-switch">
+              <button class="active" onclick="switchTrendChartById('${chartId}', 'bar')">柱图</button>
+              <button onclick="switchTrendChartById('${chartId}', 'line')">线图</button>
+              <button onclick="switchTrendChartById('${chartId}', 'pie')">饼图</button>
+            </div>
+          </div>
+          <div id="${chartId}" class="chart-box"></div>
+          <div class="section-title">波动原因分析</div>
+          <div class="analysis-item"><b>1. 增长趋势：</b>2025年12月—2026年3月，累计从2.67万亿条增至2.79万亿条，增长显著</div>
+          <div class="analysis-item"><b>2. 春节影响：</b>1—2月受春节假期减产影响，数据增速放缓</div>
+          <div class="analysis-item"><b>3. 生产恢复：</b>3月逐步回升至高位，符合季节性生产规律</div>
+          <div class="analysis-item"><b>4. 数据说明：</b>3月为非完整月，数据未达峰值属正常现象</div>
+          <div class="section-title">近半年明细</div>
+          <table class="table">
+            <tr><th>月份</th><th>采集量（亿条）</th><th>完整性</th></tr>
+            <tr><td>2025-10</td><td>262.1198</td><td>99.94%</td></tr>
+            <tr><td>2025-11</td><td>278.8322</td><td>99.95%</td></tr>
+            <tr><td>2025-12</td><td>363.3447</td><td>99.97%</td></tr>
+            <tr><td>2026-01</td><td>538.6910</td><td>99.95%</td></tr>
+            <tr><td>2026-02</td><td>445.4942</td><td>99.93%</td></tr>
+            <tr><td>2026-03</td><td>309.0835</td><td>99.97%</td></tr>
+          </table>
+        </div>`;
+      } else if (q.includes('波动') || q.includes('原因')) {
+        const chartId = 'trendChart_' + Date.now();
+        result = `
+        <div class="card">
+          <div class="section-title">
+            <span>行业云DCS采集 / 近半年波动深度分析</span>
+            <div style="display:flex;gap:16px;">
+              <i class="fa fa-download" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="downloadResult(this)"></i>
+              <i class="fa fa-share-alt" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="shareResult(this)"></i>
+            </div>
+          </div>
+          <div class="analysis-item"><b>🔴 主要波动时段：</b>2026-01 至 2026-03，增速先升后缓</div>
+          <div class="analysis-item"><b>🔵 原因一：</b>春节假期全行业工厂减产，采集量自然波动</div>
+          <div class="analysis-item"><b>🟡 原因二：</b>区域采集网关例行维护，短期小幅影响</div>
+          <div class="analysis-item"><b>🟢 原因三：</b>3月为非完整月，数据未达峰值属正常</div>
+          <div class="analysis-item"><b>✅ 结论：</b>均为非异常波动，数据质量无风险，符合行业规律</div>
+          <div class="section-title">近半年采集趋势</div>
+          <div id="${chartId}" class="chart-box"></div>
+          <div class="chart-switch" style="justify-content:center;margin-top:-10px;">
+            <button class="active" onclick="switchTrendChartById('${chartId}', 'bar')">柱图</button>
+            <button onclick="switchTrendChartById('${chartId}', 'line')">线图</button>
+            <button onclick="switchTrendChartById('${chartId}', 'pie')">饼图</button>
+          </div>
+        </div>`;
+      } else if (q.includes('区域') || q.includes('对比')) {
+        const chartId = 'trendChart_' + Date.now();
+        result = `
+        <div class="card">
+          <div class="section-title">
+            <span>全区域DCS采集量对比（累计）</span>
+            <div style="display:flex;gap:16px;">
+              <i class="fa fa-download" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="downloadResult(this)"></i>
+              <i class="fa fa-share-alt" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="shareResult(this)"></i>
+            </div>
+          </div>
+          <div class="card-grid">
+            <div class="stat-card"><div class="stat-label">祁连山区域</div><div class="stat-value">6493.58</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">中南区域</div><div class="stat-value">5452.10</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">西南区域</div><div class="stat-value">5190.77</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">南方区域</div><div class="stat-value">2863.87</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">江西区域</div><div class="stat-value">2397.66</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">中联区域</div><div class="stat-value">1804.52</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">新疆区域</div><div class="stat-value">1574.77</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">河南区域</div><div class="stat-value">1074.67</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">云贵区域</div><div class="stat-value">997.71</div><div class="stat-unit">亿条</div></div>
+          </div>
+          <div class="section-title">区域采集占比</div>
+          <div id="${chartId}" class="chart-box"></div>
+          <div class="chart-switch" style="justify-content:center;margin-top:-10px;">
+            <button class="active" onclick="switchTrendChartById('${chartId}', 'pie')">饼图</button>
+            <button onclick="switchTrendChartById('${chartId}', 'bar')">柱图</button>
+            <button onclick="switchTrendChartById('${chartId}', 'line')">线图</button>
+          </div>
+        </div>`;
+      } else {
+        const chartId = 'trendChart_' + Date.now();
+        result = `
+        <div class="card">
+          <div class="section-title">
+            <span>四川华蓥西南水泥有限公司 / DCS数据采集情况</span>
+            <div style="display:flex;gap:16px;">
+              <i class="fa fa-download" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="downloadResult(this)"></i>
+              <i class="fa fa-share-alt" style="cursor:pointer;color:var(--primary);font-size:16px;" onclick="shareResult(this)"></i>
+            </div>
+          </div>
+          <div class="card-grid">
+            <div class="stat-card"><div class="stat-label">今日新增采集</div><div class="stat-value">1263.5</div><div class="stat-unit">万条</div></div>
+            <div class="stat-card"><div class="stat-label">昨日采集量</div><div class="stat-value">1241.1</div><div class="stat-unit">万条</div></div>
+            <div class="stat-card"><div class="stat-label">近7天平均</div><div class="stat-value">1289.6</div><div class="stat-unit">万条</div></div>
+            <div class="stat-card"><div class="stat-label">近30天总量</div><div class="stat-value">3.86</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">累计采集总量</div><div class="stat-value">89.65</div><div class="stat-unit">亿条</div></div>
+            <div class="stat-card"><div class="stat-label">数据完整性</div><div class="stat-value" style="color:var(--success)">99.97%</div></div>
+          </div>
+          <div class="section-title">
+            <span>近半年采集趋势</span>
+            <div class="chart-switch">
+              <button class="active" onclick="switchTrendChartById('${chartId}', 'bar')">柱图</button>
+              <button onclick="switchTrendChartById('${chartId}', 'line')">线图</button>
+              <button onclick="switchTrendChartById('${chartId}', 'pie')">饼图</button>
+            </div>
+          </div>
+          <div id="${chartId}" class="chart-box"></div>
+          <div class="section-title">近4日明细数据</div>
+          <table class="table">
+            <tr><th>日期</th><th>数据总量（万）</th><th>完整性</th><th>准确性</th><th>状态</th></tr>
+            <tr><td>2026-03-19</td><td>1263.5</td><td>99.97%</td><td>99.96%</td><td>正常</td></tr>
+            <tr><td>2026-03-18</td><td>1241.1</td><td>99.95%</td><td>99.94%</td><td>正常</td></tr>
+            <tr><td>2026-03-17</td><td>1289.2</td><td>99.96%</td><td>99.95%</td><td>正常</td></tr>
+            <tr><td>2026-03-16</td><td>1301.1</td><td>99.98%</td><td>99.97%</td><td>正常</td></tr>
+          </table>
+        </div>`;
+      }
+
+      const msg = document.createElement('div');
+      msg.className = 'message message-bot';
+      msg.innerHTML = `<div class="message-bubble">${result}</div>`;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      
+      // 初始化图表
+      setTimeout(() => {
+        const chartBoxes = msg.querySelectorAll('.chart-box');
+        chartBoxes.forEach(box => {
+          if (box.id && !echarts.getInstanceByDom(box)) {
+            const xData = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'];
+            const yData = [262.1198, 278.8322, 363.3447, 538.6910, 445.4942, 309.0835];
+            const chart = echarts.init(box);
+            chart.setOption(getChartOption(xData, yData, 'bar', '亿条'));
+          }
+        });
+      }, 100);
+    }, 1800);
+  }
+
+  // 对话内趋势图表
+  function initTrendChart() {
+    const x = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'];
+    const y = [262.1198, 278.8322, 363.3447, 538.6910, 445.4942, 309.0835];
+    const dom = document.getElementById('trendChart');
+    if (!dom) return;
+    
+    // 销毁旧实例，防止冲突
+    if (trendChartInstance) {
+      trendChartInstance.dispose();
+      trendChartInstance = null;
+    }
+    
+    trendChartInstance = echarts.init(dom);
+    trendChartInstance.setOption(getChartOption(x, y, 'bar', '亿条'));
+    window.addEventListener('resize', () => {
+      if (trendChartInstance) trendChartInstance.resize();
+    });
+  }
+
+  function switchTrendChart(type) {
+    if (!trendChartInstance) return;
+    const x = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'];
+    const y = [262.1198, 278.8322, 363.3447, 538.6910, 445.4942, 309.0835];
+    trendChartInstance.setOption(getChartOption(x, y, type, '亿条'));
+    const group = document.querySelector('#trendChart').parentElement.querySelector('.chart-switch');
+    if(group) {
+      group.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', ['bar','line','pie'][i] === type));
+    }
+  }
+
+  // 语音输入功能
+  const voiceBtn = document.getElementById('voiceBtn');
+  let recognition = null;
+  let isRecording = false;
+
+  voiceBtn.addEventListener('click', () => {
+    if (isRecording) {
+      stopVoiceRecognition();
+    } else {
+      startVoiceRecognition();
+    }
+  });
+
+  // 侧边栏拖动调整宽度功能
+  const resizer = document.getElementById('sidebarResizer');
+  const sidebar = document.querySelector('.sidebar');
+
+  resizer.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const startX = e.clientX;
+    const startWidth = sidebar.offsetWidth;
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - startX;
+      const newWidth = startWidth + deltaX;
+      
+      // 限制最小和最大宽度
+      if (newWidth >= 200 && newWidth <= 400) {
+        sidebar.style.width = newWidth + 'px';
+      }
+    };
+
+    const handleMouseUp = () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  });
+
+  function startVoiceRecognition() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('您的浏览器不支持语音识别功能，请使用Chrome浏览器');
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'zh-CN';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = function() {
+      isRecording = true;
+      voiceBtn.classList.add('recording');
+      voiceBtn.innerHTML = '<i class="fa fa-microphone-slash"></i>';
+      addMessage('bot', '正在监听您的语音输入...');
+    };
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      queryInput.value = transcript;
+      addMessage('bot', '识别结果：' + transcript);
+      // 自动发送消息
+      setTimeout(sendMessage, 500);
+    };
+
+    recognition.onerror = function(event) {
+      console.error('语音识别错误:', event.error);
+      addMessage('bot', '语音识别失败，请重试');
+      stopVoiceRecognition();
+    };
+
+    recognition.onend = function() {
+      stopVoiceRecognition();
+    };
+
+    recognition.start();
+  }
+
+  function stopVoiceRecognition() {
+    if (recognition) {
+      recognition.stop();
+      recognition = null;
+    }
+    isRecording = false;
+    voiceBtn.classList.remove('recording');
+    voiceBtn.innerHTML = '<i class="fa fa-microphone"></i>';
+  }
+
+  // 下载查询结果
+  function downloadResult(element) {
+    const card = element.closest('.card');
+    const title = card.querySelector('.section-title span').textContent;
+    const content = card.innerHTML;
+    
+    // 创建一个HTML文件
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="zh-CN">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+          .section-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+          .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
+          .stat-card { padding: 16px; border: 1px solid #ddd; border-radius: 4px; }
+          .stat-label { font-size: 12px; color: #666; }
+          .stat-value { font-size: 22px; font-weight: bold; margin: 4px 0; }
+          .stat-unit { font-size: 12px; color: #666; }
+          .chart-box { height: 300px; margin: 16px 0; }
+          .table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+          .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+          .table th { background: #f5f5f5; }
+          .analysis-item { padding: 8px 0; }
+        </style>
+      </head>
+      <body>
+        <h1>${title}</h1>
+        <div class="card">${content}</div>
+      </body>
+      </html>
+    `;
+    
+    // 创建Blob对象并下载
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // 分享查询结果
+  function shareResult(element) {
+    const card = element.closest('.card');
+    const title = card.querySelector('.section-title span').textContent;
+    
+    // 显示分享弹窗
+    showShareDialog(title);
+  }
+
+  // 显示分享弹窗
+  function showShareDialog(title) {
+    // 创建弹窗元素
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    `;
+    
+    // 弹窗内容
+    const dialogContent = document.createElement('div');
+    dialogContent.style.cssText = `
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    `;
+    
+    // 标题
+    const dialogTitle = document.createElement('h3');
+    dialogTitle.textContent = '分享查询结果';
+    dialogTitle.style.cssText = `
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: var(--primary);
+      text-align: center;
+    `;
+    
+    // 二维码容器
+    const qrContainer = document.createElement('div');
+    qrContainer.style.cssText = `
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    `;
+    
+    // 二维码图片
+    const qrCode = document.createElement('img');
+    const url = window.location.href;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+    qrCode.src = qrUrl;
+    qrCode.alt = '分享二维码';
+    qrCode.style.cssText = `
+      border: 1px solid var(--border);
+      padding: 8px;
+      background: white;
+    `;
+    
+    // 链接容器
+    const linkContainer = document.createElement('div');
+    linkContainer.style.cssText = `
+      margin-bottom: 20px;
+    `;
+    
+    // 链接标签
+    const linkLabel = document.createElement('div');
+    linkLabel.textContent = '分享链接：';
+    linkLabel.style.cssText = `
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    `;
+    
+    // 链接输入框
+    const linkInput = document.createElement('input');
+    linkInput.type = 'text';
+    linkInput.value = url;
+    linkInput.readOnly = true;
+    linkInput.style.cssText = `
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--text-main);
+      background: var(--bg-secondary);
+    `;
+    
+    // 复制按钮
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = '复制链接';
+    copyBtn.style.cssText = `
+      margin-top: 10px;
+      padding: 6px 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    `;
+    
+    copyBtn.addEventListener('mouseover', function() {
+      this.style.background = 'var(--primary-hover)';
+    });
+    
+    copyBtn.addEventListener('mouseout', function() {
+      this.style.background = 'var(--primary)';
+    });
+    
+    copyBtn.addEventListener('click', function() {
+      linkInput.select();
+      document.execCommand('copy');
+      alert('链接已复制到剪贴板');
+    });
+    
+    // 关闭按钮
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '关闭';
+    closeBtn.style.cssText = `
+      width: 100%;
+      padding: 10px;
+      background: var(--bg-secondary);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    
+    closeBtn.addEventListener('mouseover', function() {
+      this.style.background = 'var(--btn-secondary-hover)';
+    });
+    
+    closeBtn.addEventListener('mouseout', function() {
+      this.style.background = 'var(--bg-secondary)';
+    });
+    
+    closeBtn.addEventListener('click', function() {
+      document.body.removeChild(dialog);
+    });
+    
+    // 组装弹窗
+    qrContainer.appendChild(qrCode);
+    linkContainer.appendChild(linkLabel);
+    linkContainer.appendChild(linkInput);
+    linkContainer.appendChild(copyBtn);
+    dialogContent.appendChild(dialogTitle);
+    dialogContent.appendChild(qrContainer);
+    dialogContent.appendChild(linkContainer);
+    dialogContent.appendChild(closeBtn);
+    dialog.appendChild(dialogContent);
+    
+    // 添加到页面
+    document.body.appendChild(dialog);
+    
+    // 点击弹窗外部关闭
+    dialog.addEventListener('click', function(e) {
+      if (e.target === dialog) {
+        document.body.removeChild(dialog);
+      }
+    });
+  }
+
+  // PRD模态弹窗控制
+  function openPRDModal() {
+    document.getElementById('prdModal').style.display = 'block';
+  }
+
+  function closePRDModal() {
+    document.getElementById('prdModal').style.display = 'none';
+  }
+
+  // 点击模态框外部关闭
+  window.onclick = function(event) {
+    const modal = document.getElementById('prdModal');
+    if (event.target == modal) {
+      closePRDModal();
+    }
+  }
+</script>
+</body>
+  
+  <!-- PRD模态弹窗 -->
+  <div id="prdModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>DCS数据智能分析助手 PRD</h2>
+        <span class="close" onclick="closePRDModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="prd-content">
+          <h1>DCS数据智能分析助手 PRD（V1.0.0）</h1>
+          
+          <h2>1. 文档基本信息</h2>
+          <table>
+            <tr><td>文档名称</td><td>DCS数据智能分析助手 PRD</td></tr>
+            <tr><td>版本号</td><td>V1.0.0</td></tr>
+            <tr><td>作者</td><td>郑童童</td></tr>
+            <tr><td>编写日期</td><td>2026-03-20</td></tr>
+          </table>
+          
+          <h2>2. 需求背景与概述</h2>
+          <h3>2.1 需求背景</h3>
+          <p>随着工业互联网的深度发展，企业工业数据量呈指数级增长，DCS（分布式控制系统）数据作为生产运营的核心数据，其查询、分析的效率直接影响企业生产监控、故障排查及战略决策的及时性。当前传统数据分析工具存在明显短板：需操作人员具备专业的SQL、数据分析技能，操作流程繁琐，数据查询与分析效率低下，无法满足企业各岗位（生产管理、技术、管理层、现场操作）对数据快速获取、深度分析的需求，亟需一款便捷、智能的专用查询工具解决上述痛点。</p>
+          
+          <h3>2.2 产品目标</h3>
+          <p>基于AI大模型，打造一款适配工业场景的DCS数据智能分析助手，实现自然语言交互（支持手动输入、语音输入两种方式），快速响应工业数据集查询需求；针对企业核心查询、分析场景定制化设计，支持大模型精准识别用户查询意图，智能调用查询工具完成数据查询与多维度分析；具备智能会话记忆能力，支持多轮问答，降低操作门槛，提升各岗位数据获取与分析效率，为企业生产运营决策提供数据支撑。</p>
+          
+          <h3>2.3 产品价值</h3>
+          <h4>2.3.1 量化价值指标</h4>
+          <ul>
+            <li><strong>效率提升</strong>：数据分析效率提升98%，传统人工分析单条需求需10分钟，使用本产品仅需10秒，大幅节省人力成本。</li>
+            <li><strong>查询速度</strong>：查询响应时间从传统5分钟（分钟级）降至3秒（秒级），提升99%，实现数据快速获取。</li>
+            <li><strong>问题发现</strong>：生产异常问题发现速度提升50%，从传统1.5小时缩短至45分钟，降低生产风险。</li>
+            <li><strong>覆盖范围</strong>：支持全国多区域、多工厂数据统一查询，涵盖北方、河南、江西、南方、祁连山、石膏山东、西南、新疆、云贵、中联、中南等所有核心区域及下属工厂，打破数据孤岛。</li>
+          </ul>
+          
+          <h4>2.3.2 使用效果对比</h4>
+          <table>
+            <tr><th>对比项</th><th>传统方式</th><th>DCS数据智能分析助手</th><th>提升效果/差异</th></tr>
+            <tr><td>查询响应时间</td><td>5分钟（分钟级）</td><td>3秒（秒级）</td><td>提升99%，秒级响应</td></tr>
+            <tr><td>分析效率</td><td>10分钟/条</td><td>10秒/条</td><td>提升98%，大幅节省时间</td></tr>
+            <tr><td>操作复杂度</td><td>高（需专业SQL/数据分析技能）</td><td>低（自然语言/语音交互，无需专业技能）</td><td>门槛大幅降低</td></tr>
+            <tr><td>多轮分析能力</td><td>弱（需重新输入查询条件，无上下文记忆）</td><td>强（智能会话记忆，上下文连贯）</td><td>显著提升，支持深度分析</td></tr>
+            <tr><td>异常检测速度</td><td>1.5小时</td><td>45分钟</td><td>提升50%，降低生产风险</td></tr>
+            <tr><td>覆盖范围</td><td>有限（单区域/单工厂，数据孤岛）</td><td>广泛（全国多区域多工厂，数据统一）</td><td>打破数据孤岛，实现全局数据查看</td></tr>
+            <tr><td>趋势分析能力</td><td>基础（简单统计，无可视化）</td><td>高级（多维度分析，图表可视化）</td><td>提升分析深度，结果更直观</td></tr>
+          </table>
+          
+          <h3>2.4 产品亮点</h3>
+          <ol>
+            <li><strong>智能意图识别</strong>：基于AI大模型（Qwen3-Next），精准识别复杂查询意图，可自动提取查询维度（总量、区域、工厂）、时间范围等核心信息，避免查询偏差。</li>
+            <li><strong>智能会话记忆</strong>：依托AI大模型实现上下文深度理解，支持多轮问答，自动补全用户隐含意图，保持对话连贯性，无需重复输入相同查询条件。</li>
+            <li><strong>时间智能处理</strong>：AI大模型自动识别“昨天、上周、上月”等相对时间，精准转换为具体日期范围，减少用户手动设置成本，提升查询准确性。</li>
+            <li><strong>多维度数据查询</strong>：支持总量、区域、工厂三个核心维度，结合用户输入智能匹配查询维度，可实现单维度查询、多维度组合查询（如“北方区域各工厂采集量对比”）。</li>
+            <li><strong>图表可视化</strong>：AI大模型自动分析数据，生成柱图、线图、饼图等可视化图表，直观展示数据趋势、占比等信息，无需手动制作图表。</li>
+            <li><strong>工厂和区域映射</strong>：支持工厂简称、区域简称自动映射为标准全称（如“华蓥西南”映射为“四川华蓥西南水泥”），避免因简称输入导致的查询失败，提升查询准确性。</li>
+            <li><strong>自定义查询能力</strong>：支持复杂查询场景，通过自然语言转SQL功能，实现灵活的自定义数据查询，满足专业人员深度分析需求。</li>
+            <li><strong>数据准确性保障</strong>：遵循严格的数据处理规则，AI大模型对查询结果进行双重校验，确保数据处理的准确性、一致性，避免错误数据误导决策。</li>
+          </ol>
+          
+          <h3>2.5 应用场景</h3>
+          <ol>
+            <li><strong>生产管理</strong>：生产管理人员可实时查询各区域、工厂的DCS数据采集情况，快速识别数据异常（如采集量骤降、波动过大），及时介入处理，保障生产稳定。</li>
+            <li><strong>数据分析</strong>：数据分析人员可快速获取历史数据趋势、多维度对比数据，无需手动整理，提升深度分析与预测效率，为生产优化提供数据支撑。</li>
+            <li><strong>决策支持</strong>：管理层可通过区域对比、总量趋势等数据洞察，快速掌握全局生产情况，制定科学的生产计划、资源调配等战略决策。</li>
+            <li><strong>跨区域对比</strong>：对比不同区域、工厂的生产数据，识别优势区域/工厂的管理经验，排查落后区域/工厂的问题，推动整体生产效率提升。</li>
+            <li><strong>日常监控</strong>：相关岗位人员可定期（如每日、每周）监控数据采集情况，形成常态化监控机制，提前防范生产风险。</li>
+            <li><strong>问题排查</strong>：生产出现异常时，技术人员可通过多轮问答快速查询相关数据（如异常时段、关联工厂数据），辅助故障定位与排查，缩短排查时间。</li>
+            <li><strong>绩效评估</strong>：以数据采集情况为核心指标，评估各区域、工厂的生产绩效，为绩效考核、奖惩机制提供客观数据依据。</li>
+          </ol>
+          
+          <h2>3. 产品概述</h2>
+          <p>DCS数据智能分析助手是一款基于AI大模型（Qwen3-Next）开发的工业DCS数据专用查询与分析工具，聚焦企业各岗位核心数据需求，进行定制化设计。产品支持自然语言交互（涵盖手动输入与语音输入双模式），用户可通过简单提问，快速获取DCS数据查询结果、多维度趋势分析、区域/工厂对比等信息；具备智能会话记忆、多轮问答等核心功能，无需专业技术技能，全岗位可快速上手，旨在解决传统数据分析效率低、操作复杂的痛点，为企业生产运营、决策提供精准、高效的数据支撑。</p>
+          
+          <h2>4. 需求场景描述</h2>
+          <h3>4.1 场景一：生产管理人员日常监控</h3>
+          <p><strong>背景</strong>：生产管理人员需每日/每小时监控各区域、工厂的DCS数据采集情况，及时发现采集异常（如采集中断、数据骤降），确保生产系统正常运行。</p>
+          <p><strong>痛点</strong>：传统监控工具操作繁琐，需切换多个系统、手动筛选数据，无法快速获取核心监控信息，易错过异常处置最佳时机。</p>
+          <p><strong>解决方案</strong>：使用DCS数据智能分析助手，通过自然语言交互（支持手动输入、语音提问两种方式），快速获取核心监控数据及异常提示，无需复杂操作，提升监控效率。</p>
+          
+          <h3>4.2 场景二：技术人员故障排查</h3>
+          <p><strong>背景</strong>：生产过程中出现设备故障、生产异常时，技术人员需分析DCS数据采集异常情况，定位故障原因，进行快速排查与修复。</p>
+          <p><strong>痛点</strong>：需手动登录多个数据系统，查询、整理相关数据，操作繁琐、效率低下，且无法快速关联多维度数据（如异常时段、关联工厂数据），延长故障排查时间。</p>
+          <p><strong>解决方案</strong>：使用DCS数据智能分析助手，通过自然语言交互获取详细的异常分析报告，支持多轮问答深入分析问题，无需手动整理数据、制作报表，缩短故障排查时间。</p>
+          
+          <h3>4.3 场景三：管理层决策支持</h3>
+          <p><strong>背景</strong>：管理层需掌握全国各区域、工厂的DCS数据采集情况，了解生产整体态势，基于数据洞察制定生产计划、资源调配、区域管理等战略决策。</p>
+          <p><strong>痛点</strong>：缺乏直观的数据分析工具，需安排专人整理数据、制作报表，耗时较长，且无法快速获取多维度对比、趋势分析等核心信息，影响决策效率。</p>
+          <p><strong>解决方案</strong>：使用DCS数据智能分析助手，通过自然语言交互快速获取区域对比、总量趋势等数据，自动生成可视化图表，无需手动制作，提升决策效率。</p>
+          
+          <h3>4.4 场景四：现场操作人员快速查询</h3>
+          <p><strong>背景</strong>：现场操作人员在生产现场作业时，需快速查询当前生产线、所在工厂的DCS数据，确认生产参数、采集情况，保障作业合规性。</p>
+          <p><strong>痛点</strong>：现场操作环境复杂（如双手需操作设备），不便使用键盘输入，传统查询方式无法满足现场快速查询需求。</p>
+          <p><strong>解决方案</strong>：使用DCS数据智能分析助手，通过语音输入快速查询当前生产线、所在工厂的DCS数据，确认生产参数、采集情况，适配现场操作场景，提升作业效率。</p>
+          
+          <h2>5. 马斯洛需求理解（用户需求分层）</h2>
+          <table>
+            <tr><th>需求描述（用户动机/痛点）</th><th>马斯洛层级</th><th>产品功能实现方式</th><th>设计意图</th></tr>
+            <tr><td>用户需要一个稳定可靠的系统来执行基本的工业数据查询操作，避免系统崩溃、功能失效或响应缓慢，导致工作中断、错过异常处置时机。</td><td>生理需求（基础需求）</td><td>1. 保障系统稳定运行，支持7×24小时连续运行；2. 实现核心功能稳定可用；3. 控制查询响应时间≤3秒，避免卡顿。</td><td>确保系统满足用户最基本的工作需求，提供稳定、高效的基础数据查询能力。</td></tr>
+            <tr><td>用户担心敏感的生产数据被未授权访问、泄露或篡改，希望系统能够保障数据安全。</td><td>安全需求</td><td>1. 实现数据加密存储与传输；2. 建立精细化权限控制体系；3. 记录用户操作日志，便于追溯。</td><td>建立用户对系统的信任，防范数据安全风险。</td></tr>
+            <tr><td>用户需要与团队成员共享数据洞察、分析报告，协同分析数据。</td><td>社交需求（协作需求）</td><td>1. 支持智能会话记忆，方便团队承接对话；2. 实现数据、图表、报告导出与分享；3. 支持多人同时在线查询。</td><td>打破信息孤岛，提升团队协作效率。</td></tr>
+            <tr><td>用户希望快速完成专业数据分析，生成可视化报告，提升专业形象与价值。</td><td>尊重需求</td><td>1. 提供多种图表类型与多维度分析；2. 基于AI生成专业分析报告；3. 支持自定义查询。</td><td>帮助用户输出高质量成果，获得认可。</td></tr>
+            <tr><td>用户希望通过数据洞察发现生产问题、优化流程、科学决策。</td><td>自我实现需求</td><td>1. 实现智能数据分析、趋势预测、异常诊断；2. 提供多维度数据对比；3. 支持深度自定义查询。</td><td>助力用户实现工作价值与企业生产目标。</td></tr>
+          </table>
+          
+          <h2>6. 用户故事 + GWT 定义</h2>
+          <h3>6.1 用户故事规范</h3>
+          <p><strong>格式要求</strong>：作为 [角色]，我希望 [实现的功能/目标]，以便 [业务价值/用户收益]。</p>
+          <p><strong>核心原则</strong>：每个用户故事对应1-2个核心场景，配套GWT（Given-When-Then）定义，明确场景边界、前置条件、操作步骤及预期结果。</p>
+          <p><strong>补充说明</strong>：GWT定义需贴合实际业务场景，明确操作细节、响应时间、异常提示等关键信息。</p>
+          
+          <h3>6.2 用户故事 + GWT 定义</h3>
+          <h4>6.2.1 生产管理人员</h4>
+          <p><strong>用户故事</strong>：作为生产管理人员，我希望通过自然语言或语音快速查询工业DCS数据采集情况，以便及时发现生产异常并处置，保障生产稳定。</p>
+          <p><strong>GWT-场景1：自然语言查询</strong></p>
+          <ul>
+            <li><strong>Given</strong>：用户已登录，角色为生产管理人员，拥有对应权限；系统正常运行并已对接DCS数据源；用户明确查询内容。</li>
+            <li><strong>When</strong>：用户在输入框输入查询语句并点击发送。</li>
+            <li><strong>Then</strong>：系统3秒内返回数据结果、趋势图表及文字总结；无数据时给出友好提示。</li>
+          </ul>
+          <p><strong>GWT-场景2：语音输入查询</strong></p>
+          <ul>
+            <li><strong>Given</strong>：用户已登录并拥有对应权限；语音识别功能正常，麦克风已授权；网络正常。</li>
+            <li><strong>When</strong>：用户点击语音按钮，朗读「查询四川华蓥西南水泥今日DCS数据采集量」并确认。</li>
+            <li><strong>Then</strong>：语音识别准确率≥90%；3秒内返回结果；识别失败给出清晰提示。</li>
+          </ul>
+          
+          <h4>6.2.2 技术人员</h4>
+          <p><strong>用户故事</strong>：作为技术人员，我希望通过多轮问答获取DCS数据采集异常详细分析，以便快速定位故障原因并修复。</p>
+          <p><strong>GWT-场景：多轮问答异常分析</strong></p>
+          <ul>
+            <li><strong>Given</strong>：用户已登录，角色为技术人员，拥有对应权限；系统存储历史数据；会话记忆已开启。</li>
+            <li><strong>When</strong>：用户先查询「近半年四川华蓥西南水泥DCS采集量波动原因分析」，再追问「1月份异常具体原因是什么」。</li>
+            <li><strong>Then</strong>：系统5秒内返回分析报告；基于上下文理解意图并给出详细原因；支持查看异常时段明细与图表。</li>
+          </ul>
+          
+          <h4>6.2.3 管理层</h4>
+          <p><strong>用户故事</strong>：作为管理层，我希望通过区域对比了解各区域DCS采集情况，以便掌握全局生产态势，科学决策。</p>
+          <p><strong>GWT-场景：区域对比</strong></p>
+          <ul>
+            <li><strong>Given</strong>：用户已登录，拥有全区域查看权限；系统已归集各区域数据；会话记忆开启。</li>
+            <li><strong>When</strong>：用户查询「全国各区域今日DCS采集量对比」，再追问「北方区域为什么采集量较低」。</li>
+            <li><strong>Then</strong>：3秒内返回对比结果与可视化图表；基于上下文分析偏低原因；支持下钻查看下属工厂数据。</li>
+          </ul>
+          
+          <h4>6.2.4 现场操作人员</h4>
+          <p><strong>用户故事</strong>：作为现场操作人员，我希望通过语音快速查询所在生产线/工厂DCS数据，保障作业合规。</p>
+          <p><strong>GWT-场景：现场语音查询</strong></p>
+          <ul>
+            <li><strong>Given</strong>：用户已登录，拥有所在工厂/生产线权限；语音功能正常，麦克风已授权；网络正常。</li>
+            <li><strong>When</strong>：用户通过语音输入「查询当前生产线DCS数据采集情况」并确认。</li>
+            <li><strong>Then</strong>：系统准确识别并快速返回结果；适配现场环境，操作简洁高效。</li>
+          </ul>
+          
+          <h2>7. 数据权限</h2>
+          <p>为保障企业核心生产数据安全，系统采用精细化权限控制体系，遵循“最小权限原则”。</p>
+          <ul>
+            <li><strong>默认权限</strong>：用户仅可见自身角色授权的区域、工厂数据。</li>
+            <li><strong>数据访问权限</strong>：敏感数据（异常详情、核心参数）仅对技术、管理层开放。</li>
+            <li><strong>操作权限</strong>
+              <ul>
+                <li>生产管理、现场操作：仅查询、查看图表</li>
+                <li>技术人员：查询、查看、异常分析、数据导出</li>
+                <li>管理层：全功能权限（含权限查看）</li>
+              </ul>
+            </li>
+            <li><strong>权限管理</strong>：支持管理员配置、修改、删除角色权限；记录权限变更日志。</li>
+          </ul>
+          
+          <h2>8. 验收标准</h2>
+          <h3>8.1 功能验收标准（AC-001 ~ AC-006）</h3>
+          <ul>
+            <li><strong>AC-001</strong>：支持自然语言查询，响应≤3秒；无结果返回友好提示。</li>
+            <li><strong>AC-002</strong>：支持柱图、线图、饼图，渲染≤2秒；切换≤1秒；支持悬浮查看、缩放。</li>
+            <li><strong>AC-003</strong>：数据总览展示采集总量、近半年趋势、区域分布；数据更新≤5分钟。</li>
+            <li><strong>AC-004</strong>：明细查询支持时间与工厂筛选；加载≤2秒；支持分页。</li>
+            <li><strong>AC-005</strong>：自动保存近30天查询历史；支持查看、删除、一键重查。</li>
+            <li><strong>AC-006</strong>：提供≥5个快捷查询按钮；点击响应≤3秒。</li>
+          </ul>
+          
+          <h2>9. 核心业务逻辑与功能流程</h2>
+          <h3>9.1 功能清单</h3>
+          <table>
+            <tr><th>功能名称</th><th>核心业务逻辑</th><th>异常业务逻辑和注意事项</th></tr>
+            <tr><td>智能对话查询</td><td>自然语言输入→大模型意图识别→调用数据接口→展示数据+图表</td><td>无数据/无法识别/接口失败均给出友好提示</td></tr>
+            <tr><td>语音输入</td><td>语音识别→转文本→自动填充→提交查询</td><td>识别失败、无麦克风权限、网络异常均提示</td></tr>
+            <tr><td>智能会话记忆</td><td>Redis存储对话历史，多轮问答理解上下文</td><td>单会话上限50条，溢出自动清理；登出清除</td></tr>
+            <tr><td>多轮问答</td><td>结合上下文理解隐含意图，支持深度分析</td><td>上下文不明确时主动追问；主题切换自动更新</td></tr>
+            <tr><td>数据总览</td><td>展示总量、趋势、区域分布，支持下钻</td><td>无数据/更新失败给出提示</td></tr>
+            <tr><td>明细查询</td><td>按时间、工厂筛选，分页展示明细</td><td>条件无效/无数据提示；支持分页</td></tr>
+            <tr><td>图表生成与切换</td><td>自动生成默认图表，支持切换、导出</td><td>数据不足不生成图表；导出支持PNG/PDF</td></tr>
+            <tr><td>快速查询</td><td>预设常用查询一键执行</td><td>同智能对话异常逻辑</td></tr>
+            <tr><td>历史查询记录</td><td>保存近30天记录，支持重查、删除</td><td>超期自动清理；删除不可恢复</td></tr>
+          </table>
+          
+          <h3>9.2 业务流程</h3>
+          <ol>
+            <li>用户打开页面，系统完成初始化（权限、历史记录、会话记忆）</li>
+            <li>用户选择功能模块：智能对话查询 / 数据总览 / 明细查询</li>
+            <li>用户通过文本、语音或快捷按钮提交查询</li>
+            <li>语音输入先转为文本</li>
+            <li>大模型解析意图、提取参数，结合上下文理解</li>
+            <li>系统调用对应数据接口查询与分析</li>
+            <li>生成数据卡片、表格、可视化图表，异常数据标红</li>
+            <li>在右侧展示区呈现结果</li>
+            <li>支持多轮追问，系统基于记忆连贯回答</li>
+            <li>支持查看/删除/重查历史记录</li>
+            <li>退出后保存历史记录，会话记忆随登录状态管理</li>
+          </ol>
+          
+          <h2>10. 交互流程</h2>
+          <h3>10.1 用户操作流程</h3>
+          <h4>10.1.1 智能对话查询流程</h4>
+          <ol>
+            <li>初始化加载示例与会话记忆</li>
+            <li>用户输入/语音/快捷查询提交</li>
+            <li>显示“正在分析业务数据…”加载态</li>
+            <li>展示数据卡片、表格、图表</li>
+            <li>支持多轮追问</li>
+            <li>可切换图表、查看历史记录</li>
+          </ol>
+          
+          <h4>10.1.2 语音输入流程</h4>
+          <ol>
+            <li>点击语音按钮</li>
+            <li>显示“正在聆听…”</li>
+            <li>用户朗读查询</li>
+            <li>自动转文本并填充</li>
+            <li>用户确认后提交查询</li>
+          </ol>
+          
+          <h4>10.1.3 数据总览流程</h4>
+          <ol>
+            <li>进入数据总览</li>
+            <li>加载总量、趋势、区域数据</li>
+            <li>默认展示柱图</li>
+            <li>支持切换图表类型</li>
+          </ol>
+          
+          <h4>10.1.4 明细查询流程</h4>
+          <ol>
+            <li>进入明细查询</li>
+            <li>设置日期、工厂筛选</li>
+            <li>提交查询</li>
+            <li>展示分页明细列表</li>
+            <li>支持重置筛选条件</li>
+          </ol>
+          
+          <h3>10.2 系统响应流程</h3>
+          <ol>
+            <li>接收用户请求</li>
+            <li>语音转文本（如为语音）</li>
+            <li>大模型意图分析</li>
+            <li>结合会话记忆处理上下文</li>
+            <li>调用数据接口查询分析</li>
+            <li>生成表格、图表结果</li>
+            <li>前端渲染展示</li>
+            <li>更新会话记忆</li>
+          </ol>
+          
+          <h2>11. 核心业务逻辑及功能闭环</h2>
+          <h3>11.1 核心业务流程</h3>
+          <h4>11.1.1 系统初始化流程</h4>
+          <ol>
+            <li>页面加载</li>
+            <li>权限、界面、会话记忆初始化</li>
+            <li>渲染导航与默认界面</li>
+            <li>进入可输入状态</li>
+          </ol>
+          
+          <h4>11.1.2 查询处理流程</h4>
+          <ol>
+            <li>接收文本/语音/快捷查询</li>
+            <li>语音识别转文本</li>
+            <li>大模型意图识别</li>
+            <li>上下文关联理解</li>
+            <li>调用数据工具查询</li>
+            <li>生成结果与图表</li>
+            <li>展示结果</li>
+            <li>存储对话历史</li>
+          </ol>
+          
+          <h3>11.2 功能点闭环</h3>
+          <ul>
+            <li>智能对话闭环：输入→处理→展示→多轮→交互</li>
+            <li>语音输入闭环：点击→识别→确认→提交→反馈</li>
+            <li>会话记忆闭环：加载→存储→调用→更新→清理</li>
+            <li>多轮问答闭环：首轮提问→响应→追问→上下文理解→持续回答</li>
+            <li>数据总览闭环：加载→展示→切换→刷新</li>
+            <li>明细查询闭环：筛选→查询→展示→重置</li>
+            <li>历史记录闭环：记录→展示→重查→管理</li>
+          </ul>
+          
+          <h2>12. 示例查询</h2>
+          <h3>12.1 总量查询</h3>
+          <ul>
+            <li>查询DCS数据采集总量</li>
+            <li>查询行业云今日采集总量</li>
+            <li>查询累计采集总量</li>
+          </ul>
+          
+          <h3>12.2 趋势分析</h3>
+          <ul>
+            <li>查看近半年趋势</li>
+            <li>近半年波动原因分析</li>
+            <li>近一年行业云数据采集量趋势</li>
+            <li>近半年河南区域采集情况</li>
+          </ul>
+          
+          <h3>12.3 区域对比</h3>
+          <ul>
+            <li>各区域采集量对比</li>
+            <li>查询北方/西南/新疆/云贵区域DCS采集量</li>
+          </ul>
+          
+          <h3>12.4 工厂明细</h3>
+          <ul>
+            <li>四川华蓥西南水泥</li>
+            <li>汪清北方水泥</li>
+            <li>白山北方水泥</li>
+            <li>新乡平原同力水泥</li>
+            <li>邓州中联水泥</li>
+            <li>玉山南方水泥</li>
+          </ul>
+          
+          <h2>13. 未来规划</h2>
+          <h3>13.1 功能扩展</h3>
+          <ul>
+            <li>实时监控与异常预警</li>
+            <li>支持CSV/Excel数据导出</li>
+            <li>自动生成周期性分析报告</li>
+            <li>接入更多DCS数据源</li>
+          </ul>
+          
+          <h3>13.2 用户体验优化</h3>
+          <ul>
+            <li>深度移动端适配与触摸优化</li>
+            <li>支持主题、布局个性化</li>
+            <li>多人协作分析与分享</li>
+            <li>增强语音交互鲁棒性</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</html>

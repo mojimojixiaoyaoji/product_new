@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>元数据关系图谱</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        #container {
+            width: 100%;
+            height: 800px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        button {
+            margin: 0 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        .info-panel h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .entity-info, .relation-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .entity-info h4, .relation-info h4 {
+            margin: 0 0 5px 0;
+            color: #555;
+        }
+        .entity-info p, .relation-info p {
+            margin: 3px 0;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+    <!-- 引入vis.js库 -->
+    <script src="https://visjs.github.io/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+    <h1>元数据关系图谱</h1>
+    
+    <div class="controls">
+        <button onclick="resetView()">重置视图</button>
+        <button onclick="toggleLabels()">显示/隐藏标签</button>
+        <button onclick="highlightEntities()">高亮实体</button>
+        <button onclick="highlightRelations()">高亮关系</button>
+    </div>
+    
+    <div id="container"></div>
+    
+    <div class="info-panel">
+        <h3>图谱信息</h3>
+        <div id="info-content">
+            <p>点击节点或边查看详细信息</p>
+        </div>
+    </div>
+
+    <script>
+        // 实体数据
+        const entities = [
+            { id: 1, label: 'DataCatalog', title: '数据目录', type: 'entity', color: '#4CAF50' },
+            { id: 2, label: 'Factory', title: '工厂', type: 'entity', color: '#2196F3' },
+            { id: 3, label: 'Table', title: '数据表', type: 'entity', color: '#FF9800' },
+            { id: 4, label: 'Column', title: '数据字段', type: 'entity', color: '#9C27B0' }
+        ];
+
+        // 关系数据
+        const relations = [
+            { id: 1, from: 1, to: 1, label: '目录层级包含', title: '目录间层级关联', type: 'relation', color: '#4CAF50' },
+            { id: 2, from: 1, to: 3, label: '目录挂载表', title: '目录挂载数据表', type: 'relation', color: '#4CAF50' },
+            { id: 3, from: 3, to: 4, label: '表包含字段', title: '表包含字段，记录字段物理顺序', type: 'relation', color: '#FF9800' },
+            { id: 4, from: 3, to: 3, label: '依赖于', title: '表级血缘依赖', type: 'relation', color: '#FF9800' },
+            { id: 5, from: 4, to: 4, label: '映射到', title: '字段级血缘/同构映射', type: 'relation', color: '#9C27B0' },
+            { id: 6, from: 2, to: 2, label: '工厂层级包含', title: '工厂间层级关联', type: 'relation', color: '#2196F3' },
+            { id: 7, from: 3, to: 2, label: '归属', title: '数据表归属某工厂/区域', type: 'relation', color: '#FF9800' },
+            { id: 8, from: 3, to: 3, label: '关联查询', title: '表间JOIN操作', type: 'relation', color: '#FF9800' },
+            { id: 9, from: 3, to: 3, label: '合并', title: '表间UNION操作', type: 'relation', color: '#FF9800' }
+        ];
+
+        // 节点和边的数据集
+        const nodes = new vis.DataSet(entities);
+        const edges = new vis.DataSet(relations);
+
+        // 图谱配置
+        const options = {
+            nodes: {
+                shape: 'box',
+                size: 40,
+                font: {
+                    size: 14,
+                    color: '#ffffff'
+                },
+                borderWidth: 2
+            },
+            edges: {
+                width: 2,
+                font: {
+                    size: 12,
+                    align: 'middle'
+                },
+                smooth: {
+                    enabled: true,
+                    type: 'cubicBezier'
+                }
+            },
+            layout: {
+                hierarchical: {
+                    enabled: true,
+                    levelSeparation: 200,
+                    nodeSpacing: 100,
+                    treeSpacing: 200,
+                    direction: 'UD', // UD, DU, LR, RL
+                    sortMethod: 'directed'
+                }
+            },
+            interaction: {
+                hover: true,
+                tooltipDelay: 300
+            },
+            physics: {
+                enabled: true,
+                stabilization: {
+                    enabled: true,
+                    iterations: 1000,
+                    updateInterval: 100,
+                    onlyDynamicEdges: false,
+                    fit: true
+                }
+            }
+        };
+
+        // 创建图谱
+        const container = document.getElementById('container');
+        const network = new vis.Network(container, { nodes, edges }, options);
+
+        // 点击事件处理
+        network.on('click', function(params) {
+            const infoContent = document.getElementById('info-content');
+            
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const node = nodes.get(nodeId);
+                
+                infoContent.innerHTML = `
+                    <div class="entity-info">
+                        <h4>实体: ${node.label}</h4>
+                        <p>名称: ${node.title}</p>
+                        <p>类型: ${node.type}</p>
+                    </div>
+                `;
+            } else if (params.edges.length > 0) {
+                const edgeId = params.edges[0];
+                const edge = edges.get(edgeId);
+                const fromNode = nodes.get(edge.from);
+                const toNode = nodes.get(edge.to);
+                
+                infoContent.innerHTML = `
+                    <div class="relation-info">
+                        <h4>关系: ${edge.label}</h4>
+                        <p>描述: ${edge.title}</p>
+                        <p>源实体: ${fromNode.label}</p>
+                        <p>目标实体: ${toNode.label}</p>
+                    </div>
+                `;
+            } else {
+                infoContent.innerHTML = '<p>点击节点或边查看详细信息</p>';
+            }
+        });
+
+        // 方法
+        function resetView() {
+            network.fit();
+        }
+
+        function toggleLabels() {
+            const currentOptions = network.getOptions();
+            const newOptions = {
+                nodes: {
+                    font: {
+                        size: currentOptions.nodes.font.size === 0 ? 14 : 0
+                    }
+                },
+                edges: {
+                    font: {
+                        size: currentOptions.edges.font.size === 0 ? 12 : 0
+                    }
+                }
+            };
+            network.setOptions(newOptions);
+        }
+
+        function highlightEntities() {
+            nodes.forEach(node => {
+                if (node.type === 'entity') {
+                    nodes.update({ id: node.id, color: { background: node.color, border: '#000000', highlight: { background: node.color, border: '#000000' } } });
+                } else {
+                    nodes.update({ id: node.id, color: { background: '#cccccc', border: '#999999', highlight: { background: '#cccccc', border: '#999999' } } });
+                }
+            });
+        }
+
+        function highlightRelations() {
+            edges.forEach(edge => {
+                edges.update({ id: edge.id, color: { color: edge.color, highlight: edge.color } });
+            });
+        }
+    </script>
+</body>
+</html>

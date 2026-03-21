@@ -1,0 +1,267 @@
+# Web后台产品视觉与交互规范
+
+## 一、视觉规范
+
+### 1. 色彩体系
+
+<style>
+  .inline-color-card {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    margin: 0 5px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    vertical-align: middle;
+  }
+  .color-card {
+    display: inline-block;
+    width: 120px;
+    height: 120px;
+    margin: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  .color-card .color {
+    width: 100%;
+    height: 80px;
+  }
+  .color-card .label {
+    width: 100%;
+    height: 40px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #333;
+    border-top: 1px solid #eee;
+  }
+  .color-section {
+    margin: 20px 0;
+  }
+  .color-section h3 {
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  .color-grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .color-group {
+    margin: 10px 0;
+  }
+</style>
+
+- **主色**：`#3875FF` <div class="inline-color-card" style="background-color: #3875FF;"></div>
+  - 主色禁用态：`#94B4FF` <div class="inline-color-card" style="background-color: #94B4FF;"></div>
+  - 主色 hover 态：`#2566EE` <div class="inline-color-card" style="background-color: #2566EE;"></div>
+  - 主色点击态：`#1A57D8` <div class="inline-color-card" style="background-color: #1A57D8;"></div>
+- **功能色**：
+  - 成功：`#00B42A`（操作成功提示、状态标签）<div class="inline-color-card" style="background-color: #00B42A;"></div>
+  - 警告：`#FF7D00`（风险提示、未完成状态）<div class="inline-color-card" style="background-color: #FF7D00;"></div>
+  - 错误：`#F53F3F`（操作失败、表单校验错误）<div class="inline-color-card" style="background-color: #F53F3F;"></div>
+- **中性色**：
+  - 主文本：`#1D2129` <div class="inline-color-card" style="background-color: #1D2129;"></div>
+  - 次要文本：`#4E5969` <div class="inline-color-card" style="background-color: #4E5969;"></div>
+  - 禁用文本：`#86909C` <div class="inline-color-card" style="background-color: #86909C;"></div>
+  - 主背景：`#FFFFFF` <div class="inline-color-card" style="background-color: #FFFFFF; border: 1px solid #eee;"></div>
+  - 次要背景：`#F2F3F5` <div class="inline-color-card" style="background-color: #F2F3F5;"></div>
+  - 分割线：`#E5E6EB` <div class="inline-color-card" style="background-color: #E5E6EB;"></div>
+- **关联辅助色**：
+  - 导航选中背景：`#EBF2FF` <div class="inline-color-card" style="background-color: #EBF2FF;"></div>
+  - 次按钮 hover 背景：`#F0F7FF` <div class="inline-color-card" style="background-color: #F0F7FF;"></div>
+  - 表格行 hover：`#F5F8FF` <div class="inline-color-card" style="background-color: #F5F8FF;"></div>
+  - 输入框 focus 阴影：`rgba(56, 117, 255, 0.2)` <div class="inline-color-card" style="background-color: rgba(56, 117, 255, 0.2);"></div>
+
+### 1.1 色彩色卡
+
+<div class="color-section">
+  <h3>主色系</h3>
+  <div class="color-grid">
+    <div class="color-card">
+      <div class="color" style="background-color: #3875FF;"></div>
+      <div class="label">主色 #3875FF</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #94B4FF;"></div>
+      <div class="label">禁用态 #94B4FF</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #2566EE;"></div>
+      <div class="label">hover态 #2566EE</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #1A57D8;"></div>
+      <div class="label">点击态 #1A57D8</div>
+    </div>
+  </div>
+</div>
+
+<div class="color-section">
+  <h3>功能色</h3>
+  <div class="color-grid">
+    <div class="color-card">
+      <div class="color" style="background-color: #00B42A;"></div>
+      <div class="label">成功 #00B42A</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #FF7D00;"></div>
+      <div class="label">警告 #FF7D00</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #F53F3F;"></div>
+      <div class="label">错误 #F53F3F</div>
+    </div>
+  </div>
+</div>
+
+<div class="color-section">
+  <h3>中性色</h3>
+  <div class="color-grid">
+    <div class="color-card">
+      <div class="color" style="background-color: #1D2129;"></div>
+      <div class="label">主文本 #1D2129</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #4E5969;"></div>
+      <div class="label">次要文本 #4E5969</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #86909C;"></div>
+      <div class="label">禁用文本 #86909C</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #FFFFFF; border: 1px solid #eee;"></div>
+      <div class="label">主背景 #FFFFFF</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #F2F3F5;"></div>
+      <div class="label">次要背景 #F2F3F5</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #E5E6EB;"></div>
+      <div class="label">分割线 #E5E6EB</div>
+    </div>
+  </div>
+</div>
+
+<div class="color-section">
+  <h3>关联辅助色</h3>
+  <div class="color-grid">
+    <div class="color-card">
+      <div class="color" style="background-color: #EBF2FF;"></div>
+      <div class="label">导航选中 #EBF2FF</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #F0F7FF;"></div>
+      <div class="label">次按钮hover #F0F7FF</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: #F5F8FF;"></div>
+      <div class="label">表格行hover #F5F8FF</div>
+    </div>
+    <div class="color-card">
+      <div class="color" style="background-color: rgba(56, 117, 255, 0.2);"></div>
+      <div class="label">输入框focus阴影</div>
+    </div>
+  </div>
+</div>
+
+### 2. 字体规范
+- **字体族**：`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif`
+- **文本层级**：
+  - 页面标题：20px，600，28px（页面顶部主标题）
+  - 模块标题：16px，600，24px（卡片/面板标题）
+  - 正文/操作文本：14px，400，22px（按钮、表单输入、列表内容）
+  - 辅助说明文本：12px，400，18px（表单提示、备注、小标签）
+
+### 3. 布局规范
+- **页面容器**：宽度自适应，核心内容区最大宽度 `1920px`，最小宽度 `1280px`
+- **侧边导航**：
+  - 展开宽度：`240px`（适配长目录名）
+  - 收起宽度：`64px`（仅保留图标）
+  - 选中态：背景 `#EBF2FF`，文字 `#3875FF`，左侧 4px 主色边框
+- **顶部标签页**：
+  - 高度：`48px`，背景 `#F2F3F5`
+  - 选中态：背景 `#FFFFFF`，文字 `#3875FF`，底部 2px 主色边框
+- **内容区**：内边距 `24px`，模块间距 `24px`，行间距 `1.5-1.8`
+- **卡片/面板**：圆角 `4px`，阴影仅在悬浮/层级区分时使用
+
+### 4. 组件视觉规范
+#### 按钮
+| 按钮类型 | 尺寸 | 样式规范 |
+|---------|------|--------|
+| 主按钮 | 常规：40px高（14px文字）<br>小：32px高（12px文字） | 背景 `#3875FF`，文字白色，hover `#2566EE`，点击 `#1A57D8`，圆角 4px |
+| 次按钮 | 同主按钮 | 背景透明，边框 1px `#3875FF`，文字 `#3875FF`，hover 背景 `#F0F7FF` |
+| 危险按钮 | 同主按钮 | 背景 `#F53F3F`，文字白色，hover `#D83636` |
+| 禁用按钮 | 同主按钮 | 背景 `#F2F3F5`，文字 `#86909C`，边框 `#E5E6EB`，无 hover/点击态 |
+
+#### 表单控件
+- 输入框：高度 `40px`，边框 `1px #E5E6EB`，focus 态边框 `1px #3875FF` + `rgba(56, 117, 255, 0.2)` 阴影，内边距 `0 12px`
+- 下拉选择框：与输入框尺寸一致，右侧下拉图标统一，展开面板最大高度 `300px`（超出滚动）
+- 复选框/单选框：尺寸 `16px×16px`，选中态填充 `#3875FF`，未选中态边框 `1px #86909C`
+- 日期选择器：弹窗宽度适配内容，选中日期背景 `#3875FF`，今日日期标红提示
+
+#### 数据表格
+- 表头：背景 `#F2F3F5`，文字 `#4E5969`，高度 `48px`
+- 表体：行高 `48px`，奇偶行可区分（偶行背景 `#F9F9FA`），hover 行背景 `#F5F8FF`
+- 列宽：支持拖拽调整，最小宽度 `120px`，多列时支持横向滚动
+- 图标：“数据名称”前统一使用数据库/文件图标（数据表：蓝色，EXCEL：绿色，CSV：橙色）
+
+#### 分页组件
+- 布局：居右显示，包含“总条数、页码、每页条数选择、跳转”
+- 样式：当前页码背景 `#3875FF`，文字白色
+
+---
+
+## 二、交互规范
+
+### 1. 导航交互
+- **侧边导航**：
+  - 展开/收起：点击折叠按钮切换，收起时显示 tooltip 提示菜单名称
+  - 层级菜单：二级菜单默认折叠，点击一级菜单展开/收起，最多支持三级
+  - 目录选中：默认展开当前页面所在的父级目录
+- **顶部标签页**：
+  - 切换：点击标签页切换对应数据仓库视图
+  - 超出处理：支持左右滚动，隐藏多余标签
+- **面包屑**：
+  - 分隔符统一为 `/`，最后一级无链接，点击前序层级可跳转
+  - 超出宽度时，中间层级折叠为“...”，hover 显示完整路径
+
+### 2. 筛选与搜索交互
+- **顶部行内筛选**：
+  - 输入框高度 `32px`，圆角 `4px`，占位符文字 `#86909C`
+  - 支持实时搜索，输入防抖 500ms 触发请求
+  - “展开”按钮：点击后显示更多筛选条件，默认收起
+- **左侧树形目录**：
+  - 节点间距 `8px`，选中态背景 `#EBF2FF`，文字 `#3875FF`
+  - 支持全选/反选，多选时显示已选数量
+
+### 3. 数据列表交互
+- **加载状态**：
+  - 页面级加载：居中显示骨架屏/加载动画，避免空白
+  - 模块级加载：在表格区域显示与列结构一致的骨架屏
+  - 按钮点击：点击后立即置灰/显示 loading，避免重复提交
+- **表格操作**：
+  - 行 hover：显示操作按钮（查看/编辑/删除）
+  - 多选：支持批量操作（批量删除/批量导出）
+  - 排序：点击表头可对列进行升序/降序排序
+- **大数据量处理**：
+  - 默认加载前 20 条，滚动到底部自动加载下一页
+  - 支持虚拟滚动，优化大量数据渲染性能
+
+### 4. 反馈与提示
+- **操作反馈**：
+  - 成功：绿色文字+对勾图标，提示框 3 秒后自动消失
+  - 失败：红色文字+叉号图标，提示框需手动关闭，附带错误原因
+  - 警告：橙色文字+感叹号图标，需用户确认后继续操作
+- **表单校验**：
+  - 实时校验：输入框失焦后校验，错误提示显示在输入框下方
+  - 提交校验：提交时全量校验，聚焦第一个错误输入框并提示
+- **弹窗/抽屉**：
+  - 弹窗：居中显示，最小宽度 `400px`，最大宽度 `80%` 视口宽度，蒙层 `rgba(0,0,0,0.5)`
+  - 抽屉：默认从右侧滑入，宽度 `30%-50%` 视口宽度（可配置），标题栏高度 `56px`，操作按钮居底右侧
+  - 关闭逻辑：支持点击蒙层/关闭按钮/ESC 键关闭，有未保存内容时需提示确认
