@@ -17,15 +17,20 @@ print(f"对比文件: {file1} vs {file2}\n")
 
 # 读取Excel文件中的所有工作表
 def read_all_sheets(file_path):
-    xls = pd.ExcelFile(file_path)
-    sheets = {}
-    for sheet_name in xls.sheet_names:
-        try:
-            sheets[sheet_name] = xls.parse(sheet_name)
-            print(f"{file_path} 包含工作表: {sheet_name} (行数: {len(sheets[sheet_name])}, 列数: {len(sheets[sheet_name].columns)}")
-        except Exception as e:
-            print(f"读取 {sheet_name} 时出错: {e}")
-    return sheets
+    try:
+        # 尝试使用openpyxl引擎
+        xls = pd.ExcelFile(file_path, engine='openpyxl')
+        sheets = {}
+        for sheet_name in xls.sheet_names:
+            try:
+                sheets[sheet_name] = xls.parse(sheet_name)
+                print(f"{file_path} 包含工作表: {sheet_name} (行数: {len(sheets[sheet_name])}, 列数: {len(sheets[sheet_name].columns)}")
+            except Exception as e:
+                print(f"读取 {sheet_name} 时出错: {e}")
+        return sheets
+    except Exception as e:
+        print(f"读取文件 {file_path} 时出错: {e}")
+        return {}
 
 # 读取两个文件的所有工作表
 sheets1 = read_all_sheets(file1)
