@@ -11,27 +11,41 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
 body{background:radial-gradient(ellipse at center,#0a1628 0%,#050a14 40%,#020408 100%);color:#e6edf3;overflow:hidden}
 
-body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(100,200,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(100,200,255,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(100,200,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(100,200,255,0.05) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;animation:gridMove 20s linear infinite}
 
-body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 20% 80%,rgba(100,200,255,0.08) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(0,212,255,0.06) 0%,transparent 40%),radial-gradient(circle at 50% 50%,rgba(110,180,255,0.04) 0%,transparent 60%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 20% 80%,rgba(100,200,255,0.1) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(0,212,255,0.08) 0%,transparent 40%),radial-gradient(circle at 50% 50%,rgba(110,180,255,0.06) 0%,transparent 60%);pointer-events:none;z-index:0;animation:glowPulse 8s ease-in-out infinite alternate}
+
+@keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(40px, 40px); }
+}
+
+@keyframes glowPulse {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
 #container{width:100vw;height:100vh}
-#info{position:fixed;bottom:24px;left:20px;background:rgba(5,10,30,0.9);padding:16px 20px;border-radius:12px;border:1px solid rgba(100,200,255,0.3);backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,0.8)}
-#info div{margin:6px 0;font-size:13px;color:#a0c0e0}
-#info span{color:#6eb5ff;font-weight:600}
-#detail{position:fixed;right:20px;top:20px;width:340px;background:rgba(5,10,30,0.95);padding:20px;border-radius:14px;display:none;backdrop-filter:blur(12px);border:1px solid rgba(100,200,255,0.3);box-shadow:0 8px 32px rgba(0,0,0,0.8);z-index:1000;animation:slideIn 0.3s ease;max-height:calc(100vh - 40px);overflow-y:auto}
+
+#detail{position:fixed;left:20px;top:20px;width:340px;background:rgba(5,10,30,0.95);padding:20px;border-radius:14px;display:none;backdrop-filter:blur(12px);border:1px solid rgba(100,200,255,0.3);box-shadow:0 8px 32px rgba(0,0,0,0.8);z-index:1000;animation:slideIn 0.3s ease;max-height:calc(100vh - 40px);overflow-y:auto}
 #detail h3{color:#6eb5ff;margin-bottom:12px;font-size:18px;text-shadow:0 0 20px rgba(110,180,255,0.8)}
 #detail p{font-size:14px;line-height:1.8;color:#b0c8e8}
-.label{color:#fff;font-size:11px;padding:4px 10px;background:rgba(5,10,30,0.9);border-radius:6px;white-space:nowrap;border:1px solid rgba(100,200,255,0.4);text-shadow:0 0 10px rgba(110,180,255,0.8);pointer-events:none}
+.label{color:#fff;font-size:11px;padding:4px 10px;background:rgba(5,10,30,0.9)!important;border-radius:6px;white-space:nowrap;border:1px solid rgba(100,200,255,0.4);text-shadow:0 0 10px rgba(110,180,255,0.8);pointer-events:none}
+.relation-label{color:#fff;font-size:10px;padding:2px 6px;background:rgba(0,0,0,0.6)!important;border-radius:4px;border:1px solid rgba(100,200,255,0.3);white-space:nowrap;pointer-events:none;text-shadow:0 0 8px rgba(110,180,255,0.6)}
 .label-renderer,.label-renderer *{background:transparent!important;background-color:transparent!important}
 .label-renderer > div{background:transparent!important;background-color:transparent!important}
-.label-renderer div:not(.label){background:transparent!important;background-color:transparent!important}
-.title{position:fixed;top:24px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:bold;background:linear-gradient(135deg,#6eb5ff,#00d4ff,#ff6b9d);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;letter-spacing:2px}
-.tip{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;color:#6080a0;background:rgba(5,10,30,0.8);padding:10px 20px;border-radius:20px;border:1px solid rgba(100,200,255,0.2)}
-.legend{position:fixed;bottom:24px;right:20px;background:rgba(5,10,30,0.9);padding:14px 18px;border-radius:10px;border:1px solid rgba(100,200,255,0.3)}
+.label-renderer div:not(.label):not(.relation-label){background:transparent!important;background-color:transparent!important}
+.title{position:fixed;top:24px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:bold;background:linear-gradient(135deg,#6eb5ff,#00d4ff,#ff6b9d);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;letter-spacing:2px;animation:fadeIn 0.5s ease;z-index:100}
+.tip{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;color:#6080a0;background:rgba(5,10,30,0.9);padding:12px 24px;border-radius:24px;border:1px solid rgba(100,200,255,0.2);backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,0.5);animation:fadeIn 0.5s ease;transition:all 0.3s ease;z-index:50}
+.tip:hover{border-color:rgba(100,200,255,0.35);color:#7a9abf}
+.legend{position:fixed;bottom:24px;left:20px;background:rgba(5,10,30,0.95);padding:16px 20px;border-radius:14px;border:1px solid rgba(100,200,255,0.25);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.6);animation:fadeIn 0.5s ease;transition:all 0.3s ease;max-height:calc(100vh - 120px);overflow-y:auto}
 .legend-item{display:flex;align-items:center;margin:6px 0;font-size:12px;color:#a0c0e0}
 .legend-dot{width:12px;height:12px;border-radius:50%;margin-right:10px;box-shadow:0 0 10px currentColor}
+.legend:hover{border-color:rgba(100,200,255,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(110,180,255,0.1)}
+.legend::-webkit-scrollbar{width:4px}
+.legend::-webkit-scrollbar-track{background:transparent}
+.legend::-webkit-scrollbar-thumb{background:rgba(100,200,255,0.3);border-radius:2px}
 
-.control-panel{position:fixed;top:220px;right:20px;background:rgba(5,10,30,0.95);padding:10px;border-radius:14px;border:1px solid rgba(100,200,255,0.25);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.6);z-index:100;transition:all 0.3s ease}
+.control-panel{position:fixed;bottom:24px;right:20px;background:rgba(5,10,30,0.95);padding:10px;border-radius:14px;border:1px solid rgba(100,200,255,0.25);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.6);z-index:100;transition:all 0.3s ease}
 
 .control-panel:hover{border-color:rgba(100,200,255,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(110,180,255,0.1)}
 
@@ -45,69 +59,66 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backgr
 
 .control-btn i{font-size:14px}
 
-.filter-panel{position:fixed;top:60px;left:20px;background:rgba(5,10,30,0.95);padding:16px;border-radius:14px;border:1px solid rgba(100,200,255,0.25);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.6);z-index:100;width:280px;max-height:calc(100vh - 80px);overflow-y:auto;transition:all 0.3s ease}
+.filter-panel{position:fixed;top:60px;right:20px;background:rgba(5,10,30,0.95);padding:12px;border-radius:14px;border:1px solid rgba(100,200,255,0.3);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.8);z-index:1000;min-width:200px;transition:all 0.3s ease}
 
-.filter-panel:hover{border-color:rgba(100,200,255,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(110,180,255,0.1)}
+.filter-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(100,200,255,0.1)}
 
-.filter-panel::-webkit-scrollbar{width:4px}
+.filter-header span{color:#6eb5ff;font-size:14px;font-weight:600}
 
-.filter-panel::-webkit-scrollbar-track{background:transparent}
+.toggle-icon{color:#6eb5ff;font-size:12px;transition:transform 0.3s ease}
 
-.filter-panel::-webkit-scrollbar-thumb{background:rgba(100,200,255,0.3);border-radius:2px}
+.filter-panel.collapsed .toggle-icon{transform:rotate(-90deg)}
 
-.filter-panel h4{color:#6eb5ff;font-size:15px;margin-bottom:16px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.filter-panel.collapsed .filter-controls{display:none}
 
-.filter-panel h4::before{content:'\f0b0';font-family:'Font Awesome 6 Free';font-weight:900;font-size:13px}
+.filter-controls{display:flex;flex-direction:column;gap:12px;transition:display 0.3s ease}
 
-.filter-panel h4 .toggle-icon{margin-left:auto;transition:transform 0.3s ease;font-size:12px}
+.filter-row{display:flex;flex-direction:column;gap:4px}
 
-.filter-panel.collapsed h4 .toggle-icon{transform:rotate(-90deg)}
+.filter-row label{color:#a0c0e0;font-size:12px;font-weight:500}
 
-.filter-panel.collapsed .filter-content{display:none}
+.filter-row input{padding:8px 12px;border:1px solid rgba(100,200,255,0.3);border-radius:8px;background:rgba(10,20,40,0.9);color:#a0c0e0;font-size:12px;width:100%}
 
-.filter-group{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(100,200,255,0.1)}
+.filter-row input:focus{outline:none;border-color:#6eb5ff;box-shadow:0 0 12px rgba(110,180,255,0.25)}
 
-.filter-group:last-of-type{border-bottom:none;margin-bottom:0}
+/* 自定义下拉框样式 */
+.custom-select{position:relative;width:100%;cursor:pointer}
 
-.filter-group-title{font-size:11px;color:#7a9abf;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px}
+.select-value{padding:8px 12px;border:1px solid rgba(100,200,255,0.3);border-radius:8px;background:rgba(10,20,40,0.9);color:#a0c0e0;font-size:12px;display:flex;justify-content:space-between;align-items:center}
 
-.filter-group-title i{font-size:10px}
+.select-arrow{font-size:10px;color:#6eb5ff;transition:transform 0.2s ease}
 
-.filter-row{display:flex;align-items:center;margin-bottom:12px;gap:10px}
+.custom-select .select-options{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#0a1428 !important;border:1px solid rgba(100,200,255,0.3);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.8);max-height:200px;overflow-y:auto;z-index:1001;display:none}
 
-.filter-row label{color:#a0c0e0;font-size:12px;width:50px;flex-shrink:0;font-weight:500}
+.select-option{padding:8px 12px;color:#a0c0e0;font-size:12px;cursor:pointer;transition:all 0.25s ease}
 
-.filter-row select,.filter-row input{flex:1;padding:8px 12px;border:1px solid rgba(100,200,255,0.2);border-radius:8px;background:rgba(10,20,40,0.7);color:#e6edf3;font-size:12px;transition:all 0.25s ease}
+.select-option:hover{background:rgba(110,180,255,0.25);color:#ffffff}
 
-.filter-row select:focus,.filter-row input:focus{outline:none;border-color:#6eb5ff;box-shadow:0 0 12px rgba(110,180,255,0.25);background:rgba(15,30,60,0.8)}
+.select-option.selected{background:rgba(100,200,255,0.4);color:#6eb5ff}
 
-.filter-row select:hover,.filter-row input:hover{border-color:rgba(100,200,255,0.35)}
+.custom-select.open .select-arrow{transform:rotate(180deg)}
 
-.filter-row select option{background:rgba(5,10,30,0.95);color:#e6edf3;padding:8px}
+.custom-select.open .select-options{display:block}
 
-.filter-btn{padding:8px 16px;border-radius:8px;background:transparent;border:1px solid rgba(100,200,255,0.3);color:#6eb5ff;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.25s ease;display:flex;align-items:center;gap:6px}
+.filter-actions{display:flex;gap:10px;margin-top:8px}
 
-.filter-btn:hover{background:rgba(100,200,255,0.1);border-color:rgba(100,200,255,0.5);transform:translateY(-1px)}
+.filter-btn{padding:8px 16px;border-radius:8px;border:1px solid rgba(100,200,255,0.3);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.25s ease}
 
-.filter-btn:active{transform:translateY(0)}
+#btn-apply{background:#6eb5ff;color:#ffffff}
 
-.filter-btn i{font-size:11px}
+#btn-apply:hover{background:#5aa8ff;transform:translateY(-1px)}
 
-.filter-row:last-child{justify-content:flex-start;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid rgba(100,200,255,0.15);flex-shrink:0;padding-left:50px}
+#btn-reset-filter{background:transparent;color:#6eb5ff}
+
+#btn-reset-filter:hover{background:rgba(100,200,255,0.1);border-color:rgba(100,200,255,0.5)}
 
 @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-#info{position:fixed;bottom:24px;left:20px;background:rgba(5,10,30,0.95);padding:16px 20px;border-radius:14px;border:1px solid rgba(100,200,255,0.25);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.6);animation:fadeIn 0.5s ease;transition:all 0.3s ease}
 
-#info:hover{border-color:rgba(100,200,255,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(110,180,255,0.1)}
 
-#info div{margin:8px 0;font-size:13px;color:#a0c0e0;display:flex;align-items:center;gap:8px}
-
-#info span{display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:0 0 8px currentColor}
-
-.legend{position:fixed;bottom:24px;right:20px;background:rgba(5,10,30,0.95);padding:16px 20px;border-radius:14px;border:1px solid rgba(100,200,255,0.25);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.6);animation:fadeIn 0.5s ease;transition:all 0.3s ease;max-height:calc(100vh - 120px);overflow-y:auto}
+.legend{position:fixed;bottom:24px;left:20px;background:rgba(5,10,30,0.95);padding:16px 20px;border-radius:14px;border:1px solid rgba(100,200,255,0.25);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.6);animation:fadeIn 0.5s ease;transition:all 0.3s ease;max-height:calc(100vh - 120px);overflow-y:auto}
 
 .legend:hover{border-color:rgba(100,200,255,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(110,180,255,0.1)}
 
@@ -116,12 +127,6 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backgr
 .legend::-webkit-scrollbar-track{background:transparent}
 
 .legend::-webkit-scrollbar-thumb{background:rgba(100,200,255,0.3);border-radius:2px}
-
-.tip{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;color:#6080a0;background:rgba(5,10,30,0.9);padding:12px 24px;border-radius:24px;border:1px solid rgba(100,200,255,0.2);backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,0.5);animation:fadeIn 0.5s ease;transition:all 0.3s ease}
-
-.tip:hover{border-color:rgba(100,200,255,0.35);color:#7a9abf}
-
-.title{position:fixed;top:24px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:bold;background:linear-gradient(135deg,#6eb5ff,#00d4ff,#ff6b9d);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;letter-spacing:2px;animation:fadeIn 0.5s ease;z-index:100}
 
 #detail::-webkit-scrollbar{width:4px}
 
@@ -157,77 +162,92 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backgr
 </div>
 <div id="container"></div>
 <div class="title">水泥工艺知识图谱 · 3D可视化</div>
-<div id="info">
-    <div><span style="background:#6eb5ff;color:#6eb5ff"></span>核心节点：工艺总览</div>
-    <div><span style="background:#00d4ff;color:#00d4ff"></span>青色节点：工艺环节</div>
-    <div><span style="background:#ff6b9d;color:#ff6b9d"></span>粉色节点：关键设备</div>
-    <div><span style="background:#a855f7;color:#a855f7"></span>蓝色节点：原料材料</div>
-    <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(100,200,255,0.15);font-size:12px;color:#7a9abf"><i class="fas fa-mouse" style="margin-right:6px"></i>拖拽旋转 · 滚轮缩放 · 悬停查看详情</div>
-</div>
 <div id="detail">
     <button class="detail-close" onclick="closeDetail()" title="关闭"><i class="fas fa-times"></i></button>
     <h3 id="nodeName"></h3>
     <p id="nodeDesc"></p>
 </div>
-<div class="filter-panel" id="filterPanel">
-    <h4 onclick="toggleFilterPanel()">筛选条件<i class="fas fa-chevron-down toggle-icon"></i></h4>
-    <div class="filter-content">
-        <div class="filter-group">
-            <div class="filter-group-title"><i class="fas fa-cube"></i>实体筛选</div>
-            <div class="filter-row">
-                <label>类型：</label>
-                <select id="filter-entity-type">
-                    <option value="all">全部</option>
-                    <option value="core">核心工艺</option>
-                    <option value="process">工艺流程</option>
-                    <option value="device">设备</option>
-                    <option value="material">原料/物料</option>
-                </select>
-            </div>
-            <div class="filter-row">
-                <label>名称：</label>
-                <input type="text" id="filter-entity-name" placeholder="输入实体名称">
-            </div>
-        </div>
-        <div class="filter-group">
-            <div class="filter-group-title"><i class="fas fa-link"></i>关系筛选</div>
-            <div class="filter-row">
-                <label>类型：</label>
-                <select id="filter-relation-type">
-                    <option value="all">全部</option>
-                    <option value="include">包含</option>
-                    <option value="flow_to">流向</option>
-                    <option value="use">使用</option>
-                    <option value="equip_for">设备支撑</option>
-                    <option value="produce">生产</option>
-                </select>
-            </div>
-            <div class="filter-row">
-                <label>名称：</label>
-                <input type="text" id="filter-relation-name" placeholder="输入关系名称">
-            </div>
-        </div>
-        <div class="filter-group">
-            <div class="filter-group-title"><i class="fas fa-tag"></i>属性筛选</div>
-            <div class="filter-row">
-                <label>名称：</label>
-                <input type="text" id="filter-attr-name" placeholder="输入属性名称">
-            </div>
-            <div class="filter-row">
-                <label>数值：</label>
-                <input type="text" id="filter-attr-value" placeholder="输入属性值">
+
+<div class="filter-panel collapsed" id="filterPanel">
+    <div class="filter-header" onclick="toggleFilterPanel()">
+        <span>筛选条件</span>
+        <i class="fas fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="filter-controls">
+        <div class="filter-row">
+            <label>实体类型：</label>
+            <div class="custom-select" id="custom-entity-type">
+                <div class="select-value">全部</div>
+                <div class="select-arrow">▼</div>
+                <div class="select-options">
+                    <div class="select-option" data-value="all">全部</div>
+                    <div class="select-option" data-value="factory">工厂</div>
+                    <div class="select-option" data-value="production_line">产线</div>
+                    <div class="select-option" data-value="operation">工序</div>
+                    <div class="select-option" data-value="system">系统</div>
+                    <div class="select-option" data-value="equipment_category">设备类别</div>
+                    <div class="select-option" data-value="equipment">设备</div>
+                    <div class="select-option" data-value="point">测点</div>
+                    <div class="select-option" data-value="raw_material">原料</div>
+                    <div class="select-option" data-value="indicator">指标</div>
+                    <div class="select-option" data-value="product">产品</div>
+                    <div class="select-option" data-value="quality_check">质检</div>
+                </div>
             </div>
         </div>
         <div class="filter-row">
-            <button class="filter-btn" id="btn-filter"><i class="fas fa-search"></i>筛选</button>
-            <button class="filter-btn" id="btn-clear"><i class="fas fa-undo"></i>重置</button>
+            <label>实体属性：</label>
+            <input type="text" id="filter-attr-name" placeholder="输入属性名称">
+        </div>
+        <div class="filter-row">
+            <label>属性值：</label>
+            <input type="text" id="filter-attr-value" placeholder="输入属性值">
+        </div>
+        <div class="filter-row">
+            <label>关系类型：</label>
+            <div class="custom-select" id="custom-relation-type">
+                <div class="select-value">全部</div>
+                <div class="select-arrow">▼</div>
+                <div class="select-options">
+                    <div class="select-option" data-value="all">全部</div>
+                    <div class="select-option" data-value="include">包含</div>
+                    <div class="select-option" data-value="belong_to">隶属于</div>
+                    <div class="select-option" data-value="flow_to">工艺流向</div>
+                    <div class="select-option" data-value="equip_for">设备支撑</div>
+                    <div class="select-option" data-value="has_point">含有测点</div>
+                    <div class="select-option" data-value="use_material">使用原料</div>
+                    <div class="select-option" data-value="produce_product">产出产品</div>
+                    <div class="select-option" data-value="has_indicator">关联指标</div>
+                    <div class="select-option" data-value="check_quality">质量检测</div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-row">
+            <label>展示层级：</label>
+            <div class="custom-select" id="custom-level">
+                <div class="select-value">全部层级</div>
+                <div class="select-arrow">▼</div>
+                <div class="select-options">
+                    <div class="select-option" data-value="all">全部层级</div>
+                    <div class="select-option" data-value="1">第1层</div>
+                    <div class="select-option" data-value="2">第2层</div>
+                    <div class="select-option" data-value="3">第3层</div>
+                    <div class="select-option" data-value="4">第4层</div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button class="filter-btn" id="btn-apply">应用筛选</button>
+            <button class="filter-btn" id="btn-reset-filter">重置</button>
         </div>
     </div>
 </div>
+
 <div class="control-panel">
     <div class="control-buttons">
         <button class="control-btn" title="放大" id="btn-zoom-in"><i class="fas fa-plus"></i></button>
         <button class="control-btn" title="缩小" id="btn-zoom-out"><i class="fas fa-minus"></i></button>
+        <button class="control-btn" title="全屏" id="btn-fullscreen"><i class="fas fa-expand"></i></button>
         <button class="control-btn" title="下载" id="btn-download"><i class="fas fa-download"></i></button>
         <button class="control-btn" title="分享" id="btn-share"><i class="fas fa-share-alt"></i></button>
         <button class="control-btn" title="恢复初始状态" id="btn-reset"><i class="fas fa-sync-alt"></i></button>
@@ -237,18 +257,29 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backgr
 <div class="legend">
     <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(100,200,255,0.15)">
         <div style="font-size:12px;color:#6eb5ff;margin-bottom:8px;font-weight:600;display:flex;align-items:center;gap:6px"><i class="fas fa-cube" style="font-size:10px"></i>实体类型</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#6eb5ff;color:#6eb5ff"></div>核心工艺</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#00d4ff;color:#00d4ff"></div>工艺环节</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#ff6b9d;color:#ff6b9d"></div>关键设备</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#a855f7;color:#a855f7"></div>原料材料</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ff6b35;color:#ff6b35"></div>工厂</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ff9f1c;color:#ff9f1c"></div>产线</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00d4ff;color:#00d4ff"></div>工序</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2ec4b6;color:#2ec4b6"></div>系统</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9b5de5;color:#9b5de5"></div>设备类别</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ff6b9d;color:#ff6b9d"></div>设备</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00f5d4;color:#00f5d4"></div>测点</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a855f7;color:#a855f7"></div>原料</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3a86ff;color:#3a86ff"></div>指标</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ffbe0b;color:#ffbe0b"></div>产品</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fb5607;color:#fb5607"></div>质检</div>
     </div>
     <div>
         <div style="font-size:12px;color:#6eb5ff;margin-bottom:8px;font-weight:600;display:flex;align-items:center;gap:6px"><i class="fas fa-link" style="font-size:10px"></i>关系类型</div>
         <div class="legend-item"><div class="legend-dot" style="background:#6eb5ff;color:#6eb5ff"></div>包含</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#00d4ff;color:#00d4ff"></div>流向</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f72585;color:#f72585"></div>使用</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9b5de5;color:#9b5de5"></div>隶属于</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00d4ff;color:#00d4ff"></div>工艺流向</div>
         <div class="legend-item"><div class="legend-dot" style="background:#a855f7;color:#a855f7"></div>设备支撑</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#72efdd;color:#72efdd"></div>生产</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f15bb5;color:#f15bb5"></div>含有测点</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fb5607;color:#fb5607"></div>使用原料</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3a86ff;color:#3a86ff"></div>产出产品</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00f5d4;color:#00f5d4"></div>关联指标</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ff9f1c;color:#ff9f1c"></div>质量检测</div>
     </div>
 </div>
 
@@ -256,7 +287,7 @@ body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backgr
 const scene = new THREE.Scene()
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000)
-camera.position.set(0, 5, 35)
+camera.position.set(0, 5, 43.75)
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
@@ -300,7 +331,7 @@ setTimeout(() => {
       div.style.backgroundColor = 'transparent'
       const children = div.querySelectorAll('*')
       children.forEach(c => {
-        if (!c.classList.contains('label')) {
+        if (!c.classList.contains('label') && !c.classList.contains('relation-label')) {
           c.style.background = 'transparent'
           c.style.backgroundColor = 'transparent'
         }
@@ -336,35 +367,134 @@ const group = new THREE.Group()
 scene.add(group)
 
 const colors = {
-    core: 0x6eb5ff,
-    process: 0x00d4ff,
-    device: 0xff6b9d,
-    material: 0xa855f7,
-    line: 0x6eb5ff
+    factory: 0xff6b35,      // 橙红色
+    production_line: 0xff9f1c, // 橙色
+    operation: 0x00d4ff,     // 天蓝色
+    system: 0x2ec4b6,       // 青色
+    equipment_category: 0x9b5de5, // 紫色
+    equipment: 0xff6b9d,     // 粉红色
+    point: 0x00f5d4,         // 薄荷绿
+    raw_material: 0xa855f7,  // 淡紫色
+    indicator: 0x3a86ff,     // 蓝色
+    product: 0xffbe0b,       // 黄色
+    quality_check: 0xfb5607, // 红色
+    line: 0x6eb5ff           // 浅蓝色
 }
 
+// 完整版水泥生产工艺图谱实体数据
 const nodes = [
-    { name: "水泥生产总工艺", type: "core", desc: "水泥生产核心流程：两磨一烧，包括生料制备、熟料煅烧、水泥粉磨三大阶段", x: 0, y: 0, z: 0 },
-    { name: "原料破碎", type: "process", desc: "对石灰石、黏土、砂岩、铁矿石等原料进行破碎至合适粒度", x: -10, y: 7, z: -3 },
-    { name: "原料预均化", type: "process", desc: "通过平铺取料降低成分波动，保证原料成分稳定", x: -14, y: 3, z: -6 },
-    { name: "生料粉磨", type: "process", desc: "将配比后原料研磨至符合要求的生料粉末", x: -16, y: -3, z: -2 },
-    { name: "生料均化", type: "process", desc: "使生料成分均匀稳定，为煅烧提供基础", x: -12, y: -8, z: 3 },
-    { name: "预热分解", type: "process", desc: "五级旋风预热+分解炉，完成碳酸盐分解", x: 0, y: -8, z: 2 },
-    { name: "回转窑煅烧", type: "process", desc: "1450℃左右高温煅烧生成水泥熟料", x: 6, y: -4, z: 0 },
-    { name: "熟料冷却", type: "process", desc: "高温熟料快速冷却，提高熟料强度", x: 10, y: -8, z: -3 },
-    { name: "熟料储存", type: "process", desc: "熟料储存均化，稳定质量", x: 14, y: -4, z: -5 },
-    { name: "水泥粉磨", type: "process", desc: "熟料+石膏+混合材共同粉磨为水泥成品", x: 12, y: 4, z: 0 },
-    { name: "水泥储存", type: "process", desc: "水泥成品储存，防止受潮", x: 16, y: 8, z: 3 },
-    { name: "水泥包装发运", type: "process", desc: "袋装/散装水泥装车外运", x: 10, y: 10, z: 0 },
-    { name: "石灰石", type: "material", desc: "主要钙质原料，CaO来源，占原料80%以上", x: -20, y: 8, z: 4 },
-    { name: "黏土", type: "material", desc: "提供Al₂O₃、SiO₂，调节原料成分", x: -22, y: 5, z: -2 },
-    { name: "石膏", type: "material", desc: "调节水泥凝结时间，掺量3-5%", x: 20, y: 5, z: 3 },
-    { name: "混合材", type: "material", desc: "矿渣、粉煤灰等，降低成本改善性能", x: 22, y: 9, z: -2 },
-    { name: "破碎机", type: "device", desc: "颚式、锤式、反击式破碎机，粗碎中碎细碎", x: -24, y: 8, z: 0 },
-    { name: "立磨", type: "device", desc: "生料/水泥粉磨核心设备，高效节能", x: -22, y: -3, z: 0 },
-    { name: "回转窑", type: "device", desc: "煅烧熟料核心主机设备，Φ4.8×72m", x: 4, y: -12, z: 0 },
-    { name: "篦冷机", type: "device", desc: "熟料冷却专用设备，第四代技术", x: 10, y: -12, z: 0 },
-    { name: "球磨机", type: "device", desc: "水泥终粉磨设备，Φ4.2×13m", x: 22, y: 4, z: 0 }
+    // L1 工厂 (1个)
+    { id: "F01", name: "某水泥有限公司", type: "factory", desc: "新型干法水泥生产基地，产能5000t/d", x: 0, y: 20, z: 0 },
+    
+    // L2 产线 (3个)
+    { id: "PL01", name: "水泥熟料生产线", type: "production_line", desc: "5000t/d新型干法熟料生产线", x: 0, y: 15, z: 0 },
+    { id: "PL02", name: "水泥熟料生产线2", type: "production_line", desc: "6000t/d新型干法熟料生产线", x: 30, y: 15, z: 0 },
+    { id: "PL03", name: "特种水泥生产线", type: "production_line", desc: "2000t/d特种水泥生产线", x: -30, y: 15, z: 0 },
+    
+    // L3 工序 (10个)
+    { id: "OP01", name: "原料破碎工序", type: "operation", desc: "石灰石、黏土等原料破碎，处理能力800t/h", x: -15, y: 8, z: -5 },
+    { id: "OP02", name: "生料制备工序", type: "operation", desc: "生料粉磨、均化，细度80μm筛余≤12%", x: -10, y: 5, z: -3 },
+    { id: "OP03", name: "熟料煅烧工序", type: "operation", desc: "预热、分解、回转窑煅烧、冷却，烧成温度1450±50℃", x: 0, y: 0, z: 0 },
+    { id: "OP04", name: "水泥粉磨工序", type: "operation", desc: "熟料+石膏+混合材粉磨，比表面积350±10m²/kg", x: 10, y: 5, z: 3 },
+    { id: "OP05", name: "水泥包装发运工序", type: "operation", desc: "储存、包装、发运，包装能力100t/h", x: 15, y: 8, z: 5 },
+    { id: "OP06", name: "原料破碎工序2", type: "operation", desc: "原料破碎处理，处理能力1000t/h", x: 35, y: 8, z: -5 },
+    { id: "OP07", name: "生料制备工序2", type: "operation", desc: "生料粉磨、均化，细度80μm筛余≤10%", x: 30, y: 5, z: -3 },
+    { id: "OP08", name: "熟料煅烧工序2", type: "operation", desc: "预热、分解、回转窑煅烧、冷却，烧成温度1480±50℃", x: 20, y: 0, z: 0 },
+    { id: "OP09", name: "特种水泥粉磨工序", type: "operation", desc: "特种水泥专用粉磨，比表面积400±10m²/kg", x: -20, y: 0, z: 0 },
+    { id: "OP10", name: "特种水泥包装发运", type: "operation", desc: "特种水泥包装发运，包装能力50t/h", x: -15, y: 8, z: 5 },
+    
+    // L4 系统 (8个)
+    { id: "S01", name: "原料破碎系统", type: "system", desc: "原料破碎、输送、储存，装机容量2000kW", x: -18, y: 6, z: -8 },
+    { id: "S02", name: "生料粉磨系统", type: "system", desc: "立磨、选粉、输送，装机容量4500kW", x: -12, y: 2, z: -5 },
+    { id: "S03", name: "烧成系统", type: "system", desc: "预热器、分解炉、回转窑、篦冷机，热耗2950kJ/kg-cl", x: 0, y: -5, z: 0 },
+    { id: "S04", name: "水泥粉磨系统", type: "system", desc: "球磨机、选粉机、收尘，装机容量3800kW", x: 12, y: 2, z: 5 },
+    { id: "S05", name: "原料破碎系统2", type: "system", desc: "原料破碎、输送、储存，装机容量2500kW", x: 38, y: 6, z: -8 },
+    { id: "S06", name: "生料粉磨系统2", type: "system", desc: "立磨、选粉、输送，装机容量5500kW", x: 32, y: 2, z: -5 },
+    { id: "S07", name: "烧成系统2", type: "system", desc: "预热器、分解炉、回转窑、篦冷机，热耗2850kJ/kg-cl", x: 20, y: -5, z: 0 },
+    { id: "S08", name: "特种水泥粉磨系统", type: "system", desc: "特种水泥专用粉磨，装机容量2800kW", x: -22, y: -5, z: 0 },
+    
+    // L5 设备类别 (6个)
+    { id: "EC01", name: "破碎设备", type: "equipment_category", desc: "各类原料破碎设备，类别代码BR", x: -22, y: 3, z: -10 },
+    { id: "EC02", name: "粉磨设备", type: "equipment_category", desc: "立磨、球磨等粉磨主机，类别代码GR", x: -15, y: -2, z: -8 },
+    { id: "EC03", name: "煅烧设备", type: "equipment_category", desc: "回转窑、预热器、分解炉，类别代码KI", x: -5, y: -8, z: -3 },
+    { id: "EC04", name: "冷却设备", type: "equipment_category", desc: "熟料冷却设备，类别代码CO", x: 5, y: -8, z: 3 },
+    { id: "EC05", name: "输送设备", type: "equipment_category", desc: "物料输送设备，类别代码CO", x: -5, y: -2, z: 8 },
+    { id: "EC06", name: "收尘设备", type: "equipment_category", desc: "粉尘收集设备，类别代码DU", x: 15, y: -2, z: -8 },
+    
+    // L6 设备 (12个)
+    { id: "EQ01", name: "颚式破碎机", type: "equipment", desc: "PE1200×1500，功率160kW，处理能力400t/h", x: -25, y: 0, z: -12 },
+    { id: "EQ02", name: "生料立磨", type: "equipment", desc: "LM56.3+3，功率3600kW，产量420t/h", x: -18, y: -5, z: -10 },
+    { id: "EQ03", name: "回转窑", type: "equipment", desc: "Φ4.8×72m，功率630kW，斜度3.5%", x: -3, y: -12, z: 0 },
+    { id: "EQ04", name: "第四代篦冷机", type: "equipment", desc: "IKN，篦床面积119m²，冷却能力5500t/d", x: 8, y: -12, z: 5 },
+    { id: "EQ05", name: "水泥球磨机", type: "equipment", desc: "Φ4.2×13m，功率3150kW，产量180t/h", x: 18, y: -2, z: 8 },
+    { id: "EQ06", name: "圆锥破碎机", type: "equipment", desc: "CSB400，功率200kW，处理能力500t/h", x: 40, y: 0, z: -12 },
+    { id: "EQ07", name: "生料立磨2", type: "equipment", desc: "LM60.4+3，功率4500kW，产量550t/h", x: 35, y: -5, z: -10 },
+    { id: "EQ08", name: "回转窑2", type: "equipment", desc: "Φ5.0×74m，功率710kW，斜度3.5%", x: 23, y: -12, z: 0 },
+    { id: "EQ09", name: "第五代篦冷机", type: "equipment", desc: "IKN V，篦床面积145m²，冷却能力6500t/d", x: 28, y: -12, z: 5 },
+    { id: "EQ10", name: "特种水泥球磨机", type: "equipment", desc: "Φ3.8×12m，功率2500kW，产量120t/h", x: -25, y: -8, z: 0 },
+    { id: "EQ11", name: "皮带输送机", type: "equipment", desc: "B800，功率15kW，输送能力300t/h", x: -8, y: 0, z: 10 },
+    { id: "EQ12", name: "袋式除尘器", type: "equipment", desc: "LCMD-200，处理风量20000m³/h", x: 18, y: -5, z: -10 },
+    
+    // L7 测点 (12个)
+    { id: "PT01", name: "窑头烧成温度", type: "point", desc: "DCS温度测点，量程0-1600℃，精度±1℃", x: -1, y: -15, z: 2 },
+    { id: "PT02", name: "窑尾负压", type: "point", desc: "DCS压力测点，量程-5000~0Pa，正常范围-800~-1200Pa", x: 2, y: -15, z: -2 },
+    { id: "PT03", name: "立磨主电机电流", type: "point", desc: "DCS电流测点，量程0-5000A，额定电流4200A", x: -20, y: -8, z: -8 },
+    { id: "PT04", name: "篦冷机一室风压", type: "point", desc: "DCS风压测点，量程0-15000Pa，正常值8000Pa", x: 10, y: -15, z: 8 },
+    { id: "PT05", name: "原煤喂料秤流量", type: "point", desc: "DCS流量测点，量程0-50t/h，设定值35t/h", x: -15, y: -8, z: -5 },
+    { id: "PT06", name: "圆锥破碎机振动", type: "point", desc: "破碎机振动监测，量程0-20mm/s，报警值10mm/s", x: 42, y: -3, z: -10 },
+    { id: "PT07", name: "立磨2主电机电流", type: "point", desc: "立磨2电流监测，量程0-6000A，额定电流5200A", x: 37, y: -8, z: -8 },
+    { id: "PT08", name: "回转窑2窑头温度", type: "point", desc: "窑头温度监测，量程0-1600℃，正常范围1450-1550℃", x: 21, y: -15, z: 2 },
+    { id: "PT09", name: "篦冷机2一室风压", type: "point", desc: "篦冷机2风压监测，量程0-20000Pa，正常值9000Pa", x: 30, y: -15, z: 8 },
+    { id: "PT10", name: "特种水泥磨机电流", type: "point", desc: "特种磨机电流监测，量程0-4000A，额定电流3200A", x: -27, y: -11, z: 0 },
+    { id: "PT11", name: "皮带输送机速度", type: "point", desc: "输送机速度监测，量程0-3m/s，设定值1.5m/s", x: -10, y: -3, z: 12 },
+    { id: "PT12", name: "除尘器压差", type: "point", desc: "除尘器压差监测，量程0-5000Pa，报警值3000Pa", x: 20, y: -8, z: -8 },
+    
+    // 原料 (7个)
+    { id: "RM01", name: "石灰石", type: "raw_material", desc: "主要钙质原料，CaO≥48%，储量5000万吨", x: -28, y: 10, z: -5 },
+    { id: "RM02", name: "黏土", type: "raw_material", desc: "硅铝质原料，SiO₂含量55-65%，储量800万吨", x: -30, y: 6, z: -8 },
+    { id: "RM03", name: "铁矿石", type: "raw_material", desc: "铁质校正原料，Fe₂O₃≥50%", x: -26, y: 12, z: -10 },
+    { id: "RM04", name: "原煤", type: "raw_material", desc: "回转窑燃料，热值≥5500kcal/kg，灰分≤25%", x: -5, y: -18, z: 5 },
+    { id: "RM05", name: "石膏", type: "raw_material", desc: "水泥缓凝剂，SO₃≥38%，水分≤10%", x: 22, y: 8, z: 10 },
+    { id: "RM06", name: "矿渣", type: "raw_material", desc: "混合材，活性指数≥95%，水分≤1%", x: 25, y: 5, z: 12 },
+    { id: "RM07", name: "粉煤灰", type: "raw_material", desc: "混合材，需水量比≤100%，烧失量≤5%", x: 28, y: 8, z: 8 },
+    
+    // 指标 (18个)
+    { id: "IND01", name: "生料细度", type: "indicator", desc: "80μm筛余≤12%，合格率≥95%", x: -8, y: 0, z: -8 },
+    { id: "IND02", name: "生料率值", type: "indicator", desc: "KH:0.90±0.02, SM:2.5±0.1, IM:1.5±0.1", x: -12, y: -3, z: -10 },
+    { id: "IND03", name: "熟料游离钙", type: "indicator", desc: "≤1.5%，合格率≥98%", x: 3, y: -3, z: 5 },
+    { id: "IND04", name: "熟料强度", type: "indicator", desc: "3天≥28MPa，28天≥55MPa", x: 5, y: 0, z: 8 },
+    { id: "IND05", name: "熟料立升重", type: "indicator", desc: "1350±75g/L", x: -2, y: -5, z: 5 },
+    { id: "IND06", name: "水泥细度", type: "indicator", desc: "比表面积350±10m²/kg", x: 8, y: 8, z: 8 },
+    { id: "IND07", name: "水泥强度", type: "indicator", desc: "3天≥22MPa，28天≥52.5MPa", x: 12, y: 10, z: 10 },
+    { id: "IND08", name: "水泥凝结时间", type: "indicator", desc: "初凝≥45min，终凝≤390min", x: 15, y: 12, z: 8 },
+    { id: "IND09", name: "熟料热耗", type: "indicator", desc: "≤2950kJ/kg-cl", x: 0, y: -18, z: 0 },
+    { id: "IND10", name: "工序电耗", type: "indicator", desc: "生料≤15kWh/t，水泥≤32kWh/t", x: -8, y: -10, z: -5 },
+    { id: "IND11", name: "特种水泥细度", type: "indicator", desc: "比表面积400±10m²/kg", x: -25, y: 3, z: 5 },
+    { id: "IND12", name: "特种水泥强度", type: "indicator", desc: "3天≥25MPa，28天≥60MPa", x: -22, y: 5, z: 8 },
+    { id: "IND13", name: "熟料矿物组成", type: "indicator", desc: "C3S:55-65%, C2S:15-25%", x: 8, y: -8, z: 0 },
+    { id: "IND14", name: "生料水分", type: "indicator", desc: "≤0.5%，合格率≥98%", x: -15, y: 2, z: -8 },
+    { id: "IND15", name: "熟料外观质量", type: "indicator", desc: "颜色:灰色，颗粒:均匀", x: 5, y: -5, z: -5 },
+    { id: "IND16", name: "水泥安定性", type: "indicator", desc: "沸煮法:合格", x: 15, y: 5, z: 5 },
+    { id: "IND17", name: "水泥标准稠度", type: "indicator", desc: "26-30%", x: 18, y: 3, z: 3 },
+    { id: "IND18", name: "环保排放指标", type: "indicator", desc: "NOx:≤200mg/Nm³，颗粒物:≤10mg/Nm³", x: 0, y: -22, z: 0 },
+    
+    // 产品 (5个)
+    { id: "PD01", name: "硅酸盐水泥熟料", type: "product", desc: "强度等级52.5，产量5000t/d，库存3万吨", x: 5, y: 12, z: 0 },
+    { id: "PD02", name: "PO42.5普通硅酸盐水泥", type: "product", desc: "产量2000t/d，袋装/散装比3:7", x: 20, y: 12, z: 5 },
+    { id: "PD03", name: "PO52.5普通硅酸盐水泥", type: "product", desc: "产量800t/d，主要用于重点工程", x: 22, y: 15, z: 3 },
+    { id: "PD04", name: "PC32.5复合硅酸盐水泥", type: "product", desc: "产量500t/d，主要用于民用建筑", x: 18, y: 15, z: 8 },
+    { id: "PD05", name: "低碱水泥", type: "product", desc: "碱含量≤0.6%，用于桥梁/隧道工程", x: 25, y: 12, z: 0 },
+    
+    // 质检 (9个)
+    { id: "QC01", name: "生料日常检验", type: "quality_check", desc: "成分及细度检测，每2小时，合格率96%", x: -15, y: 8, z: 0 },
+    { id: "QC02", name: "熟料物理检验", type: "quality_check", desc: "强度及物理性能，每日，合格率98%", x: 8, y: -5, z: -5 },
+    { id: "QC03", name: "熟料化学分析", type: "quality_check", desc: "化学成分分析，每日，合格率99%", x: 10, y: -2, z: -8 },
+    { id: "QC04", name: "水泥出厂检验", type: "quality_check", desc: "出厂前全面检测，每批次，合格率100%", x: 22, y: 5, z: 0 },
+    { id: "QC05", name: "原料进厂检验", type: "quality_check", desc: "原料入厂质量验收，每车，合格率95%", x: -32, y: 8, z: -12 },
+    { id: "QC06", name: "混合材检验", type: "quality_check", desc: "活性及水分检测，每批，合格率92%", x: 30, y: 2, z: 15 },
+    { id: "QC07", name: "特种水泥检验", type: "quality_check", desc: "特种水泥性能检测，每批次，合格率100%", x: -18, y: 5, z: 8 },
+    { id: "QC08", name: "环保排放检测", type: "quality_check", desc: "窑尾废气排放检测，每小时，合格率98%", x: 0, y: -25, z: 0 },
+    { id: "QC09", name: "设备润滑油检测", type: "quality_check", desc: "设备润滑油性能检测，每月，合格率95%", x: -5, y: -15, z: 10 }
 ]
 
 // 保存初始状态
@@ -377,19 +507,29 @@ const labelObjs = []
 const glowMeshes = []
 
 nodes.forEach((node, i) => {
-    const color = node.type === "core" ? colors.core : 
-                  node.type === "process" ? colors.process : 
-                  node.type === "device" ? colors.device : colors.material
-    const radius = node.type === "core" ? 1.8 : node.type === "device" ? 1.0 : 0.85
+    const color = colors[node.type] || colors.operation
+    const radius = node.type === "factory" ? 2.5 : 
+                   node.type === "production_line" ? 2.0 :
+                   node.type === "operation" ? 1.7 :
+                   node.type === "system" ? 1.4 :
+                   node.type === "equipment_category" ? 1.2 :
+                   node.type === "equipment" ? 1.1 :
+                   node.type === "point" ? 0.8 :
+                   node.type === "raw_material" ? 1.0 :
+                   node.type === "indicator" ? 0.9 :
+                   node.type === "product" ? 1.1 :
+                   node.type === "quality_check" ? 1.0 : 1.0
     
     const geo = new THREE.SphereGeometry(radius, 32, 32)
     const mat = new THREE.MeshPhongMaterial({
         color: color,
         emissive: color,
-        emissiveIntensity: 0.4,
-        shininess: 150,
+        emissiveIntensity: 0.5,
+        shininess: 200,
+        metalness: 0.7,
+        roughness: 0.3,
         transparent: true,
-        opacity: 0.95
+        opacity: 0.9
     })
     const mesh = new THREE.Mesh(geo, mat)
     mesh.position.set(node.x, node.y, node.z)
@@ -412,54 +552,208 @@ nodes.forEach((node, i) => {
     const div = document.createElement("div")
     div.className = "label"
     div.textContent = node.name
+    
+    // 为不同类型的实体使用不同的标签样式
+    if (node.type === "factory") {
+        div.style.fontWeight = "bold"
+        div.style.fontSize = "12px"
+    } else if (node.type === "production_line") {
+        div.style.fontWeight = "600"
+        div.style.fontSize = "11px"
+    }
+    
     const label = new THREE.CSS2DObject(div)
-    label.position.set(node.x, node.y + radius + 1.2, node.z)
+    // 调整标签位置，避免重叠
+    const labelOffset = node.type === "factory" ? 1.5 : 
+                       node.type === "production_line" ? 1.3 :
+                       node.type === "operation" ? 1.2 :
+                       1.0
+    label.position.set(node.x, node.y + radius + labelOffset, node.z)
+    
+    // 添加标签淡入动画
+    div.style.opacity = "0"
+    div.style.transition = "opacity 0.5s ease"
     group.add(label)
     labelObjs.push(label)
+    
+    // 触发动画
+    setTimeout(() => {
+        div.style.opacity = "1"
+    }, 100 + i * 10)
 })
 
+// 完整版关系类型定义
 const relationTypes = {
-    include: { name: "包含", color: 0x6eb5ff, desc: "总工艺包含子工艺流程" },
-    flow_to: { name: "流向", color: 0x00d4ff, desc: "工序生产顺序流向" },
-    use: { name: "使用", color: 0xf72585, desc: "工序使用原料/物料" },
-    equip_for: { name: "设备支撑", color: 0xa855f7, desc: "设备服务于工序" },
-    produce: { name: "生产", color: 0x72efdd, desc: "工序生产中间产品/成品" }
+    include: { name: "包含", color: 0x6eb5ff, desc: "上级实体包含下级实体" },
+    belong_to: { name: "隶属于", color: 0x9b5de5, desc: "下级实体隶属于上级实体" },
+    flow_to: { name: "工艺流向", color: 0x00d4ff, desc: "工序间的生产工艺流向" },
+    equip_for: { name: "设备支撑", color: 0xa855f7, desc: "设备服务于工序/系统" },
+    has_point: { name: "含有测点", color: 0xf15bb5, desc: "设备关联的监测点位" },
+    use_material: { name: "使用原料", color: 0xfb5607, desc: "工序/系统使用原料" },
+    produce_product: { name: "产出产品", color: 0x3a86ff, desc: "工序产出产品" },
+    has_indicator: { name: "关联指标", color: 0x00f5d4, desc: "工序/产品关联质量指标" },
+    check_quality: { name: "质量检测", color: 0xff9f1c, desc: "质检记录关联产品/原料" }
 }
 
+// 完整版关系数据（基于实体索引）
 const relations = [
-    { from: 0, to: 1, type: "include" },
-    { from: 0, to: 2, type: "include" },
-    { from: 0, to: 3, type: "include" },
-    { from: 0, to: 4, type: "include" },
-    { from: 0, to: 5, type: "include" },
-    { from: 0, to: 6, type: "include" },
-    { from: 0, to: 7, type: "include" },
-    { from: 0, to: 8, type: "include" },
-    { from: 0, to: 9, type: "include" },
-    { from: 0, to: 10, type: "include" },
-    { from: 0, to: 11, type: "include" },
-    { from: 1, to: 2, type: "flow_to" },
-    { from: 2, to: 3, type: "flow_to" },
-    { from: 3, to: 4, type: "flow_to" },
-    { from: 4, to: 5, type: "flow_to" },
-    { from: 5, to: 6, type: "flow_to" },
-    { from: 6, to: 7, type: "flow_to" },
-    { from: 7, to: 8, type: "flow_to" },
-    { from: 8, to: 9, type: "flow_to" },
-    { from: 9, to: 10, type: "flow_to" },
-    { from: 10, to: 11, type: "flow_to" },
-    { from: 12, to: 1, type: "use" },
-    { from: 13, to: 1, type: "use" },
-    { from: 14, to: 9, type: "use" },
-    { from: 15, to: 9, type: "use" },
-    { from: 12, to: 3, type: "use" },
-    { from: 13, to: 3, type: "use" },
-    { from: 16, to: 1, type: "equip_for" },
-    { from: 17, to: 3, type: "equip_for" },
-    { from: 17, to: 9, type: "equip_for" },
-    { from: 18, to: 6, type: "equip_for" },
-    { from: 19, to: 7, type: "equip_for" },
-    { from: 20, to: 9, type: "equip_for" }
+    // 包含关系 - 工厂层级结构
+    { from: 0, to: 1, type: "include" },  // 工厂 -> 产线1
+    { from: 0, to: 2, type: "include" },  // 工厂 -> 产线2
+    { from: 0, to: 3, type: "include" },  // 工厂 -> 特种水泥产线
+    
+    // 产线1 - 工序
+    { from: 1, to: 4, type: "include" },  // 产线1 -> 原料破碎工序
+    { from: 1, to: 5, type: "include" },  // 产线1 -> 生料制备工序
+    { from: 1, to: 6, type: "include" },  // 产线1 -> 熟料煅烧工序
+    { from: 1, to: 7, type: "include" },  // 产线1 -> 水泥粉磨工序
+    { from: 1, to: 8, type: "include" },  // 产线1 -> 水泥包装发运工序
+    
+    // 产线2 - 工序
+    { from: 2, to: 9, type: "include" },  // 产线2 -> 原料破碎工序2
+    { from: 2, to: 10, type: "include" }, // 产线2 -> 生料制备工序2
+    { from: 2, to: 11, type: "include" }, // 产线2 -> 熟料煅烧工序2
+    
+    // 特种水泥产线 - 工序
+    { from: 3, to: 12, type: "include" }, // 特种水泥产线 -> 特种水泥粉磨工序
+    { from: 3, to: 13, type: "include" }, // 特种水泥产线 -> 特种水泥包装发运
+    
+    // 包含关系 - 工序->系统
+    { from: 4, to: 14, type: "include" }, // 原料破碎工序 -> 原料破碎系统
+    { from: 5, to: 15, type: "include" }, // 生料制备工序 -> 生料粉磨系统
+    { from: 6, to: 16, type: "include" }, // 熟料煅烧工序 -> 烧成系统
+    { from: 7, to: 17, type: "include" }, // 水泥粉磨工序 -> 水泥粉磨系统
+    { from: 9, to: 18, type: "include" }, // 原料破碎工序2 -> 原料破碎系统2
+    { from: 10, to: 19, type: "include" },// 生料制备工序2 -> 生料粉磨系统2
+    { from: 11, to: 20, type: "include" },// 熟料煅烧工序2 -> 烧成系统2
+    { from: 12, to: 21, type: "include" },// 特种水泥粉磨工序 -> 特种水泥粉磨系统
+    
+    // 包含关系 - 系统->设备类别
+    { from: 14, to: 22, type: "include" }, // 原料破碎系统 -> 破碎设备
+    { from: 15, to: 23, type: "include" }, // 生料粉磨系统 -> 粉磨设备
+    { from: 16, to: 24, type: "include" }, // 烧成系统 -> 煅烧设备
+    { from: 16, to: 25, type: "include" }, // 烧成系统 -> 冷却设备
+    { from: 17, to: 23, type: "include" }, // 水泥粉磨系统 -> 粉磨设备
+    { from: 18, to: 22, type: "include" }, // 原料破碎系统2 -> 破碎设备
+    { from: 19, to: 23, type: "include" }, // 生料粉磨系统2 -> 粉磨设备
+    { from: 20, to: 24, type: "include" }, // 烧成系统2 -> 煅烧设备
+    { from: 20, to: 25, type: "include" }, // 烧成系统2 -> 冷却设备
+    { from: 21, to: 23, type: "include" }, // 特种水泥粉磨系统 -> 粉磨设备
+    { from: 14, to: 26, type: "include" }, // 原料破碎系统 -> 输送设备
+    { from: 15, to: 27, type: "include" }, // 生料粉磨系统 -> 收尘设备
+    
+    // 包含关系 - 设备类别->设备
+    { from: 22, to: 28, type: "include" }, // 破碎设备 -> 颚式破碎机
+    { from: 23, to: 29, type: "include" }, // 粉磨设备 -> 生料立磨
+    { from: 24, to: 30, type: "include" }, // 煅烧设备 -> 回转窑
+    { from: 25, to: 31, type: "include" }, // 冷却设备 -> 第四代篦冷机
+    { from: 23, to: 32, type: "include" }, // 粉磨设备 -> 水泥球磨机
+    { from: 22, to: 33, type: "include" }, // 破碎设备 -> 圆锥破碎机
+    { from: 23, to: 34, type: "include" }, // 粉磨设备 -> 生料立磨2
+    { from: 24, to: 35, type: "include" }, // 煅烧设备 -> 回转窑2
+    { from: 25, to: 36, type: "include" }, // 冷却设备 -> 第五代篦冷机
+    { from: 23, to: 37, type: "include" }, // 粉磨设备 -> 特种水泥球磨机
+    { from: 26, to: 38, type: "include" }, // 输送设备 -> 皮带输送机
+    { from: 27, to: 39, type: "include" }, // 收尘设备 -> 袋式除尘器
+    
+    // 含有测点关系 - 设备->测点
+    { from: 30, to: 40, type: "has_point" }, // 回转窑 -> 窑头烧成温度
+    { from: 30, to: 41, type: "has_point" }, // 回转窑 -> 窑尾负压
+    { from: 29, to: 42, type: "has_point" }, // 生料立磨 -> 立磨主电机电流
+    { from: 31, to: 43, type: "has_point" }, // 篦冷机 -> 篦冷机一室风压
+    { from: 29, to: 44, type: "has_point" }, // 生料立磨 -> 原煤喂料秤流量
+    { from: 33, to: 45, type: "has_point" }, // 圆锥破碎机 -> 圆锥破碎机振动
+    { from: 34, to: 46, type: "has_point" }, // 立磨2 -> 立磨2主电机电流
+    { from: 35, to: 47, type: "has_point" }, // 回转窑2 -> 回转窑2窑头温度
+    { from: 36, to: 48, type: "has_point" }, // 篦冷机2 -> 篦冷机2一室风压
+    { from: 37, to: 49, type: "has_point" }, // 特种水泥磨机 -> 特种水泥磨机电流
+    { from: 38, to: 50, type: "has_point" }, // 皮带输送机 -> 皮带输送机速度
+    { from: 39, to: 51, type: "has_point" }, // 袋式除尘器 -> 除尘器压差
+    
+    // 工艺流向关系 - 工序间流向
+    { from: 4, to: 5, type: "flow_to" }, // 原料破碎工序 -> 生料制备工序
+    { from: 5, to: 6, type: "flow_to" }, // 生料制备工序 -> 熟料煅烧工序
+    { from: 6, to: 7, type: "flow_to" }, // 熟料煅烧工序 -> 水泥粉磨工序
+    { from: 7, to: 8, type: "flow_to" }, // 水泥粉磨工序 -> 水泥包装发运工序
+    { from: 9, to: 10, type: "flow_to" }, // 原料破碎工序2 -> 生料制备工序2
+    { from: 10, to: 11, type: "flow_to" }, // 生料制备工序2 -> 熟料煅烧工序2
+    { from: 12, to: 13, type: "flow_to" }, // 特种水泥粉磨工序 -> 特种水泥包装发运
+    
+    // 使用原料关系 - 工序->原料
+    { from: 4, to: 52, type: "use_material" }, // 原料破碎工序 -> 石灰石
+    { from: 4, to: 53, type: "use_material" }, // 原料破碎工序 -> 黏土
+    { from: 5, to: 52, type: "use_material" }, // 生料制备工序 -> 石灰石
+    { from: 5, to: 53, type: "use_material" }, // 生料制备工序 -> 黏土
+    { from: 5, to: 54, type: "use_material" }, // 生料制备工序 -> 铁矿石
+    { from: 6, to: 55, type: "use_material" }, // 熟料煅烧工序 -> 原煤
+    { from: 7, to: 56, type: "use_material" }, // 水泥粉磨工序 -> 石膏
+    { from: 7, to: 57, type: "use_material" }, // 水泥粉磨工序 -> 矿渣
+    { from: 7, to: 58, type: "use_material" }, // 水泥粉磨工序 -> 粉煤灰
+    { from: 9, to: 52, type: "use_material" }, // 原料破碎工序2 -> 石灰石
+    { from: 9, to: 53, type: "use_material" }, // 原料破碎工序2 -> 黏土
+    { from: 10, to: 52, type: "use_material" }, // 生料制备工序2 -> 石灰石
+    { from: 10, to: 53, type: "use_material" }, // 生料制备工序2 -> 黏土
+    { from: 10, to: 54, type: "use_material" }, // 生料制备工序2 -> 铁矿石
+    { from: 11, to: 55, type: "use_material" }, // 熟料煅烧工序2 -> 原煤
+    { from: 12, to: 56, type: "use_material" }, // 特种水泥粉磨工序 -> 石膏
+    
+    // 产出产品关系 - 工序->产品
+    { from: 6, to: 77, type: "produce_product" }, // 熟料煅烧工序 -> 硅酸盐水泥熟料
+    { from: 7, to: 78, type: "produce_product" }, // 水泥粉磨工序 -> PO42.5水泥
+    { from: 7, to: 79, type: "produce_product" }, // 水泥粉磨工序 -> PO52.5水泥
+    { from: 7, to: 80, type: "produce_product" }, // 水泥粉磨工序 -> PC32.5水泥
+    { from: 7, to: 81, type: "produce_product" }, // 水泥粉磨工序 -> 低碱水泥
+    { from: 11, to: 77, type: "produce_product" }, // 熟料煅烧工序2 -> 硅酸盐水泥熟料
+    { from: 12, to: 81, type: "produce_product" }, // 特种水泥粉磨工序 -> 低碱水泥
+    
+    // 关联指标关系 - 工序->指标
+    { from: 5, to: 59, type: "has_indicator" }, // 生料制备工序 -> 生料细度
+    { from: 5, to: 60, type: "has_indicator" }, // 生料制备工序 -> 生料率值
+    { from: 6, to: 61, type: "has_indicator" }, // 熟料煅烧工序 -> 熟料游离钙
+    { from: 6, to: 62, type: "has_indicator" }, // 熟料煅烧工序 -> 熟料强度
+    { from: 6, to: 63, type: "has_indicator" }, // 熟料煅烧工序 -> 熟料立升重
+    { from: 7, to: 64, type: "has_indicator" }, // 水泥粉磨工序 -> 水泥细度
+    { from: 7, to: 65, type: "has_indicator" }, // 水泥粉磨工序 -> 水泥强度
+    { from: 7, to: 66, type: "has_indicator" }, // 水泥粉磨工序 -> 水泥凝结时间
+    { from: 6, to: 67, type: "has_indicator" }, // 熟料煅烧工序 -> 熟料热耗
+    { from: 5, to: 68, type: "has_indicator" }, // 生料制备工序 -> 工序电耗
+    { from: 7, to: 68, type: "has_indicator" }, // 水泥粉磨工序 -> 工序电耗
+    { from: 10, to: 59, type: "has_indicator" }, // 生料制备工序2 -> 生料细度
+    { from: 10, to: 60, type: "has_indicator" }, // 生料制备工序2 -> 生料率值
+    { from: 11, to: 61, type: "has_indicator" }, // 熟料煅烧工序2 -> 熟料游离钙
+    { from: 11, to: 62, type: "has_indicator" }, // 熟料煅烧工序2 -> 熟料强度
+    { from: 11, to: 63, type: "has_indicator" }, // 熟料煅烧工序2 -> 熟料立升重
+    { from: 11, to: 67, type: "has_indicator" }, // 熟料煅烧工序2 -> 熟料热耗
+    { from: 10, to: 68, type: "has_indicator" }, // 生料制备工序2 -> 工序电耗
+    { from: 12, to: 69, type: "has_indicator" }, // 特种水泥粉磨工序 -> 特种水泥细度
+    { from: 12, to: 70, type: "has_indicator" }, // 特种水泥粉磨工序 -> 特种水泥强度
+    { from: 6, to: 71, type: "has_indicator" }, // 熟料煅烧工序 -> 熟料矿物组成
+    { from: 11, to: 71, type: "has_indicator" }, // 熟料煅烧工序2 -> 熟料矿物组成
+    { from: 5, to: 72, type: "has_indicator" }, // 生料制备工序 -> 生料水分
+    { from: 10, to: 72, type: "has_indicator" }, // 生料制备工序2 -> 生料水分
+    { from: 6, to: 73, type: "has_indicator" }, // 熟料煅烧工序 -> 熟料外观质量
+    { from: 11, to: 73, type: "has_indicator" }, // 熟料煅烧工序2 -> 熟料外观质量
+    { from: 7, to: 74, type: "has_indicator" }, // 水泥粉磨工序 -> 水泥安定性
+    { from: 7, to: 75, type: "has_indicator" }, // 水泥粉磨工序 -> 水泥标准稠度
+    { from: 6, to: 76, type: "has_indicator" }, // 熟料煅烧工序 -> 环保排放指标
+    { from: 11, to: 76, type: "has_indicator" }, // 熟料煅烧工序2 -> 环保排放指标
+    
+    // 质量检测关系 - 质检->对象
+    { from: 82, to: 5, type: "check_quality" },  // 生料日常检验 -> 生料制备工序
+    { from: 82, to: 10, type: "check_quality" }, // 生料日常检验 -> 生料制备工序2
+    { from: 83, to: 6, type: "check_quality" },  // 熟料物理检验 -> 熟料煅烧工序
+    { from: 83, to: 11, type: "check_quality" }, // 熟料物理检验 -> 熟料煅烧工序2
+    { from: 84, to: 6, type: "check_quality" },  // 熟料化学分析 -> 熟料煅烧工序
+    { from: 84, to: 11, type: "check_quality" }, // 熟料化学分析 -> 熟料煅烧工序2
+    { from: 85, to: 7, type: "check_quality" },  // 水泥出厂检验 -> 水泥粉磨工序
+    { from: 86, to: 52, type: "check_quality" }, // 原料进厂检验 -> 石灰石
+    { from: 87, to: 57, type: "check_quality" }, // 混合材检验 -> 矿渣
+    { from: 88, to: 12, type: "check_quality" }, // 特种水泥检验 -> 特种水泥粉磨工序
+    { from: 89, to: 6, type: "check_quality" },  // 环保排放检测 -> 熟料煅烧工序
+    { from: 89, to: 11, type: "check_quality" }, // 环保排放检测 -> 熟料煅烧工序2
+    { from: 90, to: 28, type: "check_quality" }, // 设备润滑油检测 -> 颚式破碎机
+    { from: 90, to: 29, type: "check_quality" }, // 设备润滑油检测 -> 生料立磨
+    { from: 90, to: 30, type: "check_quality" }  // 设备润滑油检测 -> 回转窑
 ]
 
 const flowParticles = []
@@ -477,21 +771,26 @@ relations.forEach((rel, idx) => {
     const points = curve.getPoints(50)
     const geo = new THREE.BufferGeometry().setFromPoints(points)
     
+    // 根据关系类型设置线条宽度
+    const lineWidth = rel.type === "include" ? 2 : 
+                     rel.type === "flow_to" ? 1.5 :
+                     1
+    
     const mat = new THREE.LineBasicMaterial({
         color: relType.color,
         transparent: true,
-        opacity: 0.4,
-        linewidth: 1
+        opacity: 0.6,
+        linewidth: lineWidth
     })
     const line = new THREE.Line(geo, mat)
     line.userData = { relationType: rel.type, relationIndex: idx }
     group.add(line)
 
-    const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.03, 8, false)
+    const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.05, 8, false)
     const tubeMat = new THREE.MeshBasicMaterial({
         color: relType.color,
         transparent: true,
-        opacity: 0.2,
+        opacity: 0.3,
         blending: THREE.AdditiveBlending
     })
     const tube = new THREE.Mesh(tubeGeo, tubeMat)
@@ -502,33 +801,30 @@ relations.forEach((rel, idx) => {
     const labelDiv = document.createElement("div")
     labelDiv.className = "relation-label"
     labelDiv.textContent = relType.name
+    const r = (relType.color >> 16) & 255
+    const g = (relType.color >> 8) & 255
+    const b = relType.color & 255
     labelDiv.style.cssText = `
-        color: #${relType.color.toString(16).padStart(6, '0')};
-        font-size: 10px;
-        padding: 2px 6px;
-        background: rgba(0,0,0,0.6);
-        border-radius: 4px;
-        border: 1px solid rgba(${(relType.color >> 16) & 255},${(relType.color >> 8) & 255},${relType.color & 255},0.5);
-        white-space: nowrap;
-        pointer-events: none;
-        text-shadow: 0 0 8px rgba(${(relType.color >> 16) & 255},${(relType.color >> 8) & 255},${relType.color & 255},0.8);
+        color: #${relType.color.toString(16).padStart(6, '0')} !important;
+        border: 1px solid rgba(${r},${g},${b},0.5) !important;
+        text-shadow: 0 0 8px rgba(${r},${g},${b},0.8) !important;
     `
     const relLabel = new THREE.CSS2DObject(labelDiv)
     relLabel.position.set(midPoint.x, midPoint.y, midPoint.z)
     group.add(relLabel)
     
-    const flowGeo = new THREE.SphereGeometry(0.15, 16, 16)
+    const flowGeo = new THREE.SphereGeometry(0.2, 16, 16)
     const flowMat = new THREE.MeshBasicMaterial({
         color: relType.color,
         transparent: true,
-        opacity: 0.9,
+        opacity: 1.0,
         blending: THREE.AdditiveBlending
     })
     const flowParticle = new THREE.Mesh(flowGeo, flowMat)
     flowParticle.userData = { 
         curve: curve, 
         progress: Math.random(), 
-        speed: 0.005 + Math.random() * 0.003,
+        speed: 0.008 + Math.random() * 0.004,
         relationType: rel.type,
         relationIndex: idx
     }
@@ -706,13 +1002,41 @@ window.addEventListener("dblclick", e => {
             label.visible = connectedNodes.has(idx)
         })
         
+        // 获取与选中节点相关的所有关系索引
+        const relatedRelIndices = new Set()
+        relations.forEach((rel, idx) => {
+            if (rel.from === nodeIndex || rel.to === nodeIndex) {
+                relatedRelIndices.add(idx)
+            }
+        })
+        
         group.children.forEach(child => {
-            if (child.userData && child.userData.relationType) {
-                const rel = relations.find(r => 
-                    (r.from === nodeIndex && child.userData.relationType === r.type) ||
-                    (r.to === nodeIndex && child.userData.relationType === r.type)
-                )
-                child.visible = rel && (connectedNodes.has(rel.from) && connectedNodes.has(rel.to))
+            // 检查是否是关系相关对象（线条、粒子）
+            if (child.userData && (child.userData.relationType || child.userData.curve)) {
+                const relIndex = child.userData.relationIndex
+                child.visible = relatedRelIndices.has(relIndex)
+            }
+            // 检查是否是关系标签（CSS2DObject）
+            else if (child instanceof THREE.CSS2DObject && child.element && child.element.className === 'relation-label') {
+                // 关系标签在group中的顺序与relations数组对应
+                // 找到这个标签对应的关系索引
+                const labelIndex = group.children.filter(c => c instanceof THREE.CSS2DObject && c.element && c.element.className === 'relation-label').indexOf(child)
+                // 需要根据实际创建顺序来确定，这里简化处理：显示所有相关关系的标签
+                const relIndex = Array.from(group.children).indexOf(child)
+                // 通过查找关系标签在group中的位置来确定对应的关系
+                let actualRelIndex = -1
+                let labelCount = 0
+                for (let i = 0; i < group.children.length; i++) {
+                    const c = group.children[i]
+                    if (c instanceof THREE.CSS2DObject && c.element && c.element.className === 'relation-label') {
+                        if (c === child) {
+                            actualRelIndex = labelCount
+                            break
+                        }
+                        labelCount++
+                    }
+                }
+                child.visible = actualRelIndex >= 0 && relatedRelIndices.has(actualRelIndex)
             }
         })
         
@@ -749,17 +1073,17 @@ window.addEventListener("keydown", e => {
         })
         labelObjs.forEach(label => label.visible = true)
         group.children.forEach(child => {
-            if (child.userData && child.userData.relationType) {
+            // 检查是否是关系相关对象（线条、粒子、标签）
+            if (child.userData && (child.userData.relationType || child.userData.curve)) {
+                child.visible = true
+            }
+            // 检查是否是关系标签（CSS2DObject）
+            else if (child instanceof THREE.CSS2DObject && child.element && child.element.className === 'relation-label') {
                 child.visible = true
             }
         })
     }
 })
-
-function toggleFilterPanel() {
-    const panel = document.getElementById('filterPanel')
-    panel.classList.toggle('collapsed')
-}
 
 function closeDetail() {
     const detail = document.getElementById('detail')
@@ -779,11 +1103,25 @@ function updateHover() {
                 if (hoveredMesh !== selectedMesh) {
                     hoveredMesh.scale.set(1, 1, 1)
                 }
+                // 恢复光晕效果
+                if (glowMeshes[hoveredMesh.userData.index]) {
+                    const glowMesh = glowMeshes[hoveredMesh.userData.index]
+                    if (glowMesh) {
+                        glowMesh.material.opacity = 0.15
+                    }
+                }
             }
             hoveredMesh = obj
             hoveredMesh.material.emissiveIntensity = 0.9
             if (hoveredMesh !== selectedMesh) {
                 hoveredMesh.scale.set(1.3, 1.3, 1.3)
+            }
+            // 增强光晕效果
+            if (glowMeshes[hoveredMesh.userData.index]) {
+                const glowMesh = glowMeshes[hoveredMesh.userData.index]
+                if (glowMesh) {
+                    glowMesh.material.opacity = 0.3
+                }
             }
             
             // 悬停时显示实体详情
@@ -798,6 +1136,13 @@ function updateHover() {
             hoveredMesh.material.emissiveIntensity = 0.4
             if (hoveredMesh !== selectedMesh) {
                 hoveredMesh.scale.set(1, 1, 1)
+            }
+            // 恢复光晕效果
+            if (glowMeshes[hoveredMesh.userData.index]) {
+                const glowMesh = glowMeshes[hoveredMesh.userData.index]
+                if (glowMesh) {
+                    glowMesh.material.opacity = 0.15
+                }
             }
             hoveredMesh = null
         }
@@ -827,9 +1172,11 @@ function fixLabelContainers() {
         lr.style.backgroundColor = 'transparent'
         const children = lr.querySelectorAll(':scope > div')
         children.forEach(child => {
-            child.style.background = 'transparent'
-            child.style.backgroundColor = 'transparent'
-            const inner = child.querySelectorAll('div:not(.label)')
+            if (!child.classList.contains('label') && !child.classList.contains('relation-label')) {
+                child.style.background = 'transparent'
+                child.style.backgroundColor = 'transparent'
+            }
+            const inner = child.querySelectorAll('div:not(.label):not(.relation-label)')
             inner.forEach(c => {
                 c.style.background = 'transparent'
                 c.style.backgroundColor = 'transparent'
@@ -873,10 +1220,6 @@ function animate() {
     
     renderer.render(scene, camera)
     labelRenderer.render(scene, camera)
-    
-    if (Math.floor(time * 60) % 30 === 0) {
-        fixLabelContainers()
-    }
 }
 
 // 隐藏加载状态
@@ -892,15 +1235,21 @@ setTimeout(() => {
 
 animate()
 
+// 筛选面板展开收起功能
+function toggleFilterPanel() {
+    const panel = document.getElementById('filterPanel');
+    panel.classList.toggle('collapsed');
+}
+
 // 按钮功能实现
 const btnZoomIn = document.getElementById('btn-zoom-in');
 const btnZoomOut = document.getElementById('btn-zoom-out');
+const btnFullscreen = document.getElementById('btn-fullscreen');
 const btnDownload = document.getElementById('btn-download');
 const btnShare = document.getElementById('btn-share');
-const btnReset = document.getElementById('btn-reset');
-const btnFilter = document.getElementById('btn-filter');
-const btnClear = document.getElementById('btn-clear');
-
+const btnResetView = document.getElementById('btn-reset');
+const btnApplyFilter = document.getElementById('btn-apply');
+const btnResetFilter = document.getElementById('btn-reset-filter');
 // 放大功能
 btnZoomIn.addEventListener('click', () => {
     camera.position.z -= 5;
@@ -914,6 +1263,17 @@ btnZoomOut.addEventListener('click', () => {
     camera.position.z += 5;
     if (camera.position.z > controls.maxDistance) {
         camera.position.z = controls.maxDistance;
+    }
+});
+
+// 全屏功能
+btnFullscreen.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
     }
 });
 
@@ -946,7 +1306,7 @@ btnShare.addEventListener('click', () => {
 });
 
 // 恢复初始状态
-btnReset.addEventListener('click', () => {
+btnResetView.addEventListener('click', () => {
     // 重置相机位置
     camera.position.copy(initialCameraPosition);
     controls.target.copy(initialCameraTarget);
@@ -968,7 +1328,17 @@ btnReset.addEventListener('click', () => {
         }
         
         if (labelObjs[index]) {
-            const radius = node.type === "core" ? 1.8 : node.type === "device" ? 1.0 : 0.85;
+            const radius = node.type === "factory" ? 2.2 : 
+                           node.type === "production_line" ? 1.8 :
+                           node.type === "operation" ? 1.5 :
+                           node.type === "system" ? 1.3 :
+                           node.type === "equipment_category" ? 1.1 :
+                           node.type === "equipment" ? 1.0 :
+                           node.type === "point" ? 0.7 :
+                           node.type === "raw_material" ? 0.9 :
+                           node.type === "indicator" ? 0.8 :
+                           node.type === "product" ? 1.0 :
+                           node.type === "quality_check" ? 0.9 : 1.0;
             labelObjs[index].position.set(initialPos.x, initialPos.y + radius + 1.2, initialPos.z);
         }
     });
@@ -993,8 +1363,14 @@ btnReset.addEventListener('click', () => {
         label.visible = true;
     });
     
+    // 显示所有关系相关对象（线条、标签、粒子）
     group.children.forEach(child => {
-        if (child.userData && child.userData.relationType) {
+        // 检查是否是关系相关对象
+        if (child.userData && (child.userData.relationType || child.userData.curve)) {
+            child.visible = true;
+        }
+        // 检查是否是关系标签（CSS2DObject）
+        else if (child instanceof THREE.CSS2DObject && child.element && child.element.className === 'relation-label') {
             child.visible = true;
         }
     });
@@ -1005,22 +1381,78 @@ btnReset.addEventListener('click', () => {
     hoveredMesh = null;
 });
 
+// 初始化自定义下拉框
+function initCustomSelects() {
+    const customSelects = document.querySelectorAll('.custom-select');
+    
+    customSelects.forEach(select => {
+        const valueElement = select.querySelector('.select-value');
+        const optionsContainer = select.querySelector('.select-options');
+        const options = select.querySelectorAll('.select-option');
+        
+        // 点击下拉框打开/关闭
+        valueElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // 关闭其他所有下拉框
+            document.querySelectorAll('.custom-select.open').forEach(s => {
+                if (s !== select) {
+                    s.classList.remove('open');
+                }
+            });
+            // 切换当前下拉框状态
+            select.classList.toggle('open');
+        });
+        
+        // 点击选项
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const value = option.dataset.value;
+                const text = option.textContent;
+                valueElement.textContent = text;
+                
+                // 移除所有选中状态
+                options.forEach(opt => opt.classList.remove('selected'));
+                // 添加当前选中状态
+                option.classList.add('selected');
+                
+                // 关闭下拉框
+                select.classList.remove('open');
+            });
+        });
+    });
+    
+    // 点击页面其他地方关闭下拉框
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.custom-select.open').forEach(select => {
+            select.classList.remove('open');
+        });
+    });
+}
+
+// 获取自定义下拉框的值
+function getCustomSelectValue(selectId) {
+    const select = document.getElementById(selectId);
+    const selectedOption = select.querySelector('.select-option.selected');
+    return selectedOption ? selectedOption.dataset.value : 'all';
+}
+
 // 筛选功能
-btnFilter.addEventListener('click', () => {
-    const entityType = document.getElementById('filter-entity-type').value;
-    const relationType = document.getElementById('filter-relation-type').value;
-    const entityName = document.getElementById('filter-entity-name').value.toLowerCase();
-    const relationName = document.getElementById('filter-relation-name').value.toLowerCase();
+btnApplyFilter.addEventListener('click', () => {
+    const entityType = getCustomSelectValue('custom-entity-type');
+    const relationType = getCustomSelectValue('custom-relation-type');
     const attrName = document.getElementById('filter-attr-name').value.toLowerCase();
     const attrValue = document.getElementById('filter-attr-value').value.toLowerCase();
+    const level = getCustomSelectValue('custom-level');
     
     // 筛选节点
     const visibleNodes = new Set();
     
     meshes.forEach((mesh, index) => {
         const node = nodes[index];
+        
+        // 实体类型筛选
         const typeMatch = entityType === 'all' || node.type === entityType;
-        const nameMatch = !entityName || node.name.toLowerCase().includes(entityName);
         
         // 属性筛选
         let attrMatch = true;
@@ -1035,7 +1467,14 @@ btnFilter.addEventListener('click', () => {
             }
         }
         
-        if (typeMatch && nameMatch && attrMatch) {
+        // 层级筛选
+        let levelMatch = true;
+        if (level !== 'all') {
+            const nodeLevel = getNodeLevel(node);
+            levelMatch = nodeLevel == level;
+        }
+        
+        if (typeMatch && attrMatch && levelMatch) {
             mesh.visible = true;
             mesh.material.opacity = 1;
             visibleNodes.add(index);
@@ -1062,13 +1501,11 @@ btnFilter.addEventListener('click', () => {
             const relType = child.userData.relationType;
             const relIndex = child.userData.relationIndex;
             const rel = relations[relIndex];
-            const relTypeInfo = relationTypes[relType];
             
             const typeMatch = relationType === 'all' || relType === relationType;
             const nodesVisible = visibleNodes.has(rel.from) && visibleNodes.has(rel.to);
-            const nameMatch = !relationName || relTypeInfo.name.toLowerCase().includes(relationName);
             
-            child.visible = typeMatch && nodesVisible && nameMatch;
+            child.visible = typeMatch && nodesVisible;
         }
     });
     
@@ -1079,13 +1516,15 @@ btnFilter.addEventListener('click', () => {
     }
 });
 
-// 清除筛选
-btnClear.addEventListener('click', () => {
+// 重置筛选
+btnResetFilter.addEventListener('click', () => {
     // 重置筛选条件
-    document.getElementById('filter-entity-type').value = 'all';
-    document.getElementById('filter-relation-type').value = 'all';
-    document.getElementById('filter-entity-name').value = '';
-    document.getElementById('filter-relation-name').value = '';
+    // 重置自定义下拉框
+    resetCustomSelect('custom-entity-type', '全部');
+    resetCustomSelect('custom-relation-type', '全部');
+    resetCustomSelect('custom-level', '全部层级');
+    
+    // 重置输入框
     document.getElementById('filter-attr-name').value = '';
     document.getElementById('filter-attr-value').value = '';
     
@@ -1114,6 +1553,28 @@ btnClear.addEventListener('click', () => {
     selectedMesh = null;
     hoveredMesh = null;
 });
+
+// 获取节点层级
+function getNodeLevel(node) {
+    const levelMap = {
+        'factory': 1,
+        'production_line': 2,
+        'operation': 3,
+        'system': 3,
+        'equipment_category': 3,
+        'equipment': 4,
+        'point': 4,
+        'raw_material': 3,
+        'indicator': 3,
+        'product': 3,
+        'quality_check': 3
+    };
+    return levelMap[node.type] || 3;
+}
+
+// 页面加载完成后初始化自定义下拉框
+document.addEventListener('DOMContentLoaded', initCustomSelects);
+
 </script>
 </body>
 </html>
