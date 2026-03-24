@@ -435,7 +435,7 @@ workflow:
         title: 用户输入
         type: start
         variables:
-        - default: Bearer 
+        - default: Bearer
           hide: true
           hint: ''
           label: authorization
@@ -795,7 +795,8 @@ workflow:
             value: "{\n\t\"vector\": \"{{#1770805779308.text#}}\",\n\t\"param\": {\n\t\t\"entity_des\": \"{{#llm.structured_output.dataDomain#}}\",\n\t\t\"tags\": \"{{#llm.structured_output.factory#}}\",\n\t\t\"factory\": \"{{#llm.structured_output.factory#}}\"\n\t},\n\t\"pageSize\": 5\n}"
           type: json
         error_strategy: fail-branch
-        headers: Authorization: ''
+        headers:
+          Authorization: '{{#1769496563446.authorization#}}'
         method: post
         params: ''
         retry_config:
@@ -895,7 +896,7 @@ workflow:
         - case_id: db21306f-1bf5-4ee3-81b9-8b06a3215073
           conditions:
           - comparison_operator: contains
-            id: a82616d9-4777-4cc1-8d0e-8350350cb26e
+            id: a82616d9-4777-4cc1-810e-8350350cb26e
             value: pie
             varType: string
             variable_selector:
@@ -1303,19 +1304,14 @@ workflow:
         error_strategy: fail-branch
         outputs:
           categories:
-            children: null
             type: string
           chart_type:
-            children: null
             type: string
           data:
-            children: null
             type: string
           title:
-            children: null
             type: string
           x_axis:
-            children: null
             type: string
         selected: false
         title: 数据提取&排序&时间戳转换
@@ -1345,10 +1341,8 @@ workflow:
         error_strategy: fail-branch
         outputs:
           id:
-            children: null
             type: array[number]
           result:
-            children: null
             type: array[number]
         selected: false
         title: 表Id提取
@@ -1400,7 +1394,7 @@ workflow:
         prompt_template:
         - id: 90a30a69-314c-4860-b3e6-27c1d532c34f
           role: system
-          text: "你是数据分析场景的智能query重写助手，专门处理用户连续多轮提问，严格遵循以下规则：\n\n=== 核心规则（优先级从高到低） ===\n1.【上下文过滤原则】\n   - 只看【用户的历史提问{{#conversation.lastQuery#}}】，**完全忽略助手的所有回复内容**（表格、数据、图表、总结、echarts、解释等一律不看、不继承、不输出）。\n   - 你的任务**只重写用户当前的query**，不生成任何数据、图表、总结。\n2.【完整语义不修改原则】\n   - 只要当前提问语义完整，**所有词语一律原样保留**，**禁止删减、改写、简化任何内容**，包括场景词、指标域、分类词、位置词等，直接返回原问题。\n3.【完全新问题原则】\n   - 如果当前提问是全新的「主体+时间+指标/维度」组合（与上次无关联），直接返回原问题，不继承任何信息。\n4.【指代补全原则】\n   - 如果当前提问是指代性表述（如“XX的呢”“XX怎么样”“XX的相同维度”“11点呢”“昨天呢”等），仅补全「缺失的时间/指标/维度/对比对象」，保留当前明确指定的主体/时间/维度；\n   - 时间指代补全规则：\n     - “XX点呢”：替换上次时间的小时部分，保留日期和分钟/秒，生成精准时间点；\n     - “昨天呢”：基于系统当前时间{{#1772171506106.text#}}向前推1天作为日期；\n     - 仅指定日期（如2026-02-01）：不补全具体时分秒，将时间表述调整为「2026-02-01全天」，表示查询该日期一整天的数据。\n5.【禁止继承原则】\n   - 绝对禁止将上次提问的「主体」继承到当前提问（除非当前无任何主体），仅可继承「时间/指标/维度」。\n6.【场景词必须保留】\n   - “首页指标”“中控指标”“质量指标”“分厂指标”等**决定数据域/数据源的业务关键词，必须100%原样保留，禁止删除**。\n7.【输出规则】\n   - 只返回重写后的纯文本query，无任何多余解释、JSON、符号，保证语句通顺、符合自然问法。\n\n=== 上下文参考 ===\n上次用户提问：{{#conversation.lastQuery#}}\n当前用户提问：{{#sys.query#}}\n系统当前时间：{{#1772171506106.text#}}（格式：YYYY-MM-DD HH:MM:SS）\n\n=== 强制示例（必须对齐此逻辑） ===\n示例1（基础指代）：\n上次：统计郑童童最近一周的工时\n当前：葛东的呢\n重写后：统计葛东最近一周的工时\n\n示例2（完整信息不修改）：\n上次：近一个月华蓥工厂的指标数据\n当前：近一周宾州工厂的指标数据\n重写后：近一周宾州工厂的指标数据\n\n示例3（时间维度修改）：\n上次：统计郑童童最近一周的工时\n当前：他的本月工时呢\n重写后：统计郑童童本月的工时\n\n示例4（仅指定日期-全天数据）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n当前：查询华蓥工厂2026-02-01 ，1#回转窑状态\n重写后：查询华蓥工厂2026-02-01全天，1#回转窑状态\n\n示例5（小时指代补全）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n当前：11点呢\n重写后：查询华蓥工厂2026-02-01 11:00:00，1#回转窑状态\n\n示例6（相对时间补全-基于当前时间）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n系统当前时间：2026-02-26 10:00:00\n当前：昨天呢\n重写后：查询华蓥工厂2026-02-25全天，1#回转窑状态\n\n示例7（跨工厂对比补全）：\n上次：查询华蓥工厂近一月，水泥配料熟料强度预测合格率\n当前：与罗定工厂相比，哪个高\n重写后：查询华蓥工厂近一月水泥配料熟料强度预测合格率与罗定工厂相比哪个高\n\n示例8（完全新问题）：\n上次：查询华蓥工厂近一月，水泥配料熟料强度预测合格率\n当前：查询华蓥工厂2026-02-01，1#回转窑状态\n重写后：查询华蓥工厂2026-02-01全天，1#回转窑状态\n\n=== 执行要求 ===\n1. 严格按示例逻辑处理，优先使用系统当前时间计算“昨天”；\n2. 若系统当前时间未提供，默认按“自然日昨天”计算；\n3. 只输出最终重写后的query，无其他内容。"
+          text: "你是数据分析场景的智能query重写助手，专门处理用户连续多轮提问，严格遵循以下规则：\n\n=== 核心规则（优先级从高到低） ===\n1.【上下文过滤原则】\n   - 只看【用户的历史提问{{#conversation.lastQuery#}}】，**完全忽略助手的所有回复内容**（表格、数据、图表、总结、echarts、解释等一律不看、不继承、不输出）。\n   - 你的任务**只重写用户当前的query**，不生成任何数据、图表、总结。\n2.【完整语义不修改原则】\n   - 只要当前提问语义完整，**所有词语一律原样保留**，**禁止删减、改写、简化任何内容**，包括场景词、指标域、分类词、位置词等，直接返回原问题。\n3.【完全新问题原则】\n   - 如果当前提问是全新的「主体+时间+指标/维度」组合（与上次无关联），直接返回原问题，不继承任何信息。\n4.【指代补全原则】\n   - 如果当前提问是指代性表述（如“XX的呢”“XX怎么样”“XX的相同维度”“11点呢”“昨天呢”等），仅补全「缺失的时间/指标/维度/对比对象」，保留当前明确指定的主体/时间/维度；\n   - 时间指代补全规则：\n     - “XX点呢”：替换上次时间的小时部分，保留日期和分钟/秒，生成精准时间点；\n     - “昨天呢”：基于系统当前时间{{#1772171506106.text#}}向前推1天作为日期；\n     - 仅指定日期（如2026-02-01）：不补全具体时分秒，将时间表述调整为「2026-02-01全天」，表示查询该日期一整天的数据。\n5.【禁止继承原则】\n   - 绝对禁止将上次提问的「主体」继承到当前提问（除非当前无任何主体），仅可继承「时间/指标/维度」。\n6.【场景词必须保留】\n   - “首页指标”“中控指标”“质量指标”“分厂指标”等**决定数据域/数据源的业务关键词，必须100%原样保留，禁止删除**。\n7.【输出规则】\n   - 只返回重写后的纯文本query，无任何多余解释、JSON、符号，保证语句通顺、符合自然问法。\n\n=== 上下文参考 ===\n上次用户提问：{{#conversation.lastQuery#}}\n当前用户提问：{{#sys.query#}}\n系统当前时间：{{#1772171506106.text#}}（格式：YYYY-MM-DD HH:MM:SS）\n\n=== 强制示例（必须对齐此逻辑） ===\n示例1（基础指代）：\n上次：统计郑童童最近一周的工时\n当前：葛东的呢\n重写后：统计葛东最近一周的工时\n\n示例2（完整信息不修改）：\n上次：近一个月华蓥工厂的指标数据\n当前：近一周宾州工厂的指标数据\n重写后：近一周宾州工厂的指标数据\n\n示例3（时间维度修改）：\n上次：统计郑童童最近一周的工时\n当前：他的本月工时呢\n重写后：统计郑童童本月工时\n\n示例4（仅指定日期-全天数据）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n当前：查询华蓥工厂2026-02-01 ，1#回转窑状态\n重写后：查询华蓥工厂2026-02-01全天，1#回转窑状态\n\n示例5（小时指代补全）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n当前：11点呢\n重写后：查询华蓥工厂2026-02-01 11:00:00，1#回转窑状态\n\n示例6（相对时间补全-基于当前时间）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n系统当前时间：2026-02-26 10:00:00\n当前：昨天呢\n重写后：查询华蓥工厂2026-02-25全天，1#回转窑状态\n\n示例7（跨工厂对比补全）：\n上次：查询华蓥工厂近一月，水泥配料熟料强度预测合格率\n当前：与罗定工厂相比，哪个高\n重写后：查询华蓥工厂近一月水泥配料熟料强度预测合格率与罗定工厂相比哪个高\n\n示例8（完全新问题）：\n上次：查询华蓥工厂近一月，水泥配料熟料强度预测合格率\n当前：查询华蓥工厂2026-02-01，1#回转窑状态\n重写后：查询华蓥工厂2026-02-01全天，1#回转窑状态\n\n=== 执行要求 ===\n1. 严格按示例逻辑处理，优先使用系统当前时间计算“昨天”；\n2. 若系统当前时间未提供，默认按“自然日昨天”计算；\n3. 只输出最终重写后的query，无其他内容。"
         selected: false
         title: query重写
         type: llm
@@ -1487,8 +1481,6 @@ workflow:
         params:
           format: ''
           timezone: ''
-        plugin_id: null
-        plugin_unique_identifier: ''
         provider_icon: ''
         provider_id: time
         provider_name: 时间工具
@@ -1550,12 +1542,11 @@ workflow:
       type: custom
       width: 242
     - data:
-        code: "\nimport json\nfrom datetime import datetime, timezone, timedelta\n\ndef main(data_query_result: str):\n    def convert_timestamp(timestamp_ms):\n        try:\n            ts = float(timestamp_ms)\n            dt_utc = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)\n            dt_cst = dt_utc.astimezone(timezone(timedelta(hours=8)))\n            return dt_cst.strftime(\"%Y-%m-%d %H:%M:%S\")\n        except Exception:\n            return str(timestamp_ms)\n    \n    result = {\n        \"success\": False, \n        \"error\": \"输入为空\", \n        \"data\": {}\n    }\n\n    try:\n        if data_query_result is None:\n            pass\n        elif isinstance(data_query_result, str):\n            if not data_query_result.strip():\n                result[\"error\"] = \"输入字符串为空\"\n            else:\n                try:\n                    raw_data = json.loads(data_query_result)\n                    result = raw_data.copy() if isinstance(raw_data, dict) else {}\n                except json.JSONDecodeError:\n                    result[\"error\"] = \"JSON解析失败\"\n        elif isinstance(data_query_result, dict):\n            result = data_query_result.copy()\n        else:\n            result[\"error\"] = f\"类型错误: {type(data_query_result)}\"\n        \n        if isinstance(result, dict) and result.get(\"success\") and result.get(\"data\"):\n            data = result[\"data\"]\n            if \"状态记录时间\" in data and isinstance(data[\"状态记录时间\"], list):\n                data[\"状态记录时间\"] = [convert_timestamp(ts) for ts in data[\"状态记录时间\"]]\n            elif \"time\" in data and isinstance(data[\"time\"], list):\n                data[\"time\"] = [convert_timestamp(ts) for ts in data[\"time\"]]\n        \n        processed_data = json.dumps(result, ensure_ascii=False)\n        return {\n            \"processed_data\": processed_data\n        }\n\n    except Exception as e:\n        error_result = {\n            \"success\": False, \n            \"error\": str(e), \n            \"data\": {}\n        }\n        return {\n            \"processed_data\": json.dumps(error_result, ensure_ascii=False)\n        }"
+        code: "\nimport json\nfrom datetime import datetime, timezone, timedelta\n\ndef main(data_query_result: str):\n    def convert_timestamp(timestamp_ms):\n        try:\n            ts = float(timestamp_ms)\n            dt_utc = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)\n            dt_cst = dt_utc.astimezone(timezone(timedelta(hours=8)))\n            return dt_cst.strftime(\"%Y-%m-%d %H:%M:%S\")\n        except Exception:\n            return str(timestamp_ms)\n    \n    result = {\n        \"success\": False, \n        \"error\": \"输入为空\", \n        \"data\": {}\n    }\n\n    try:\n        if data_query_result is None:\n            pass\n        elif isinstance(data_query_result, str):\n            if not data_query_result.strip():\n                result[\"error\"] = \"输入字符串为空\"\n            else:\n                try:\n                    raw_data = json.loads(data_query_result)\n                    result = raw_data.copy() if isinstance(raw_data, dict) else {}\n                except json.JSONDecodeError:\n                    result[\"error\"] = \"JSON解析失败\"\n        elif isinstance(data_query_result, dict):\n            result = data_query_result.copy()\n        else:\n            result[\"error\"] = f\"类型错误: {type(data_query_result).__name__}\"\n        \n        if isinstance(result, dict) and result.get(\"success\") and result.get(\"data\"):\n            data = result[\"data\"]\n            if \"状态记录时间\" in data and isinstance(data[\"状态记录时间\"], list):\n                data[\"状态记录时间\"] = [convert_timestamp(ts) for ts in data[\"状态记录时间\"]]\n            elif \"time\" in data and isinstance(data[\"time\"], list):\n                data[\"time\"] = [convert_timestamp(ts) for ts in data[\"time\"]]\n        \n        processed_data = json.dumps(result, ensure_ascii=False)\n        return {\n            \"processed_data\": processed_data\n        }\n\n    except Exception as e:\n        error_result = {\n            \"success\": False, \n            \"error\": str(e), \n            \"data\": {}\n        }\n        return {\n            \"processed_data\": json.dumps(error_result, ensure_ascii=False)\n        }"
         code_language: python3
         error_strategy: fail-branch
         outputs:
           processed_data:
-            children: null
             type: string
         selected: false
         title: 数据预处理-时间转换
