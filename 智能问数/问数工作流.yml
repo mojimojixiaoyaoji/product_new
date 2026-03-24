@@ -1,399 +1,1586 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 郑童童-问数
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenuis/openai_api_compatible:0.0.25
+    version: 0.0.25
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenuis/echarts:0.0.1
+    version: 0.0.1
+kind: app
 version: 0.5.0
-name: 智能问数Agent（优化版）
-description: 支持数据查询、图表生成、报告生成，可反问澄清、多轮对话及历史数据对比
-mode: workflow
-features:
-  file_upload:
-    allowed_file_uploads: false
-    allowed_file_extensions: []
-    allowed_file_upload_count: 3
-    allowed_file_size: 10
-    file_upload_method: disabled
-  opening_statement: ""
-  suggested_questions: []
-  speech_to_text:
-    enabled: false
-  text_to_speech:
-    enabled: false
-    voice: ""
-  interaction_mode: conversation
-  sensitive_word_avoidance:
-    enabled: false
-variables:
-  - id: intent
-    name: 用户意图
-    description: 用于路由分支，取值为data/chart/report/chart_from_history/report_from_history/compare
-    value: ""
+workflow:
+  conversation_variables:
+  - description: 提问上下文
+    id: f2783cd2-a616-4eee-bde9-08cb6dfba450
+    name: memories
+    selector:
+    - conversation
+    - memories
+    value: []
+    value_type: array[string]
+  - description: 上次提问
+    id: 07e00b6f-47fa-49a4-a485-0cce5c5a77d1
+    name: lastQuery
+    selector:
+    - conversation
+    - lastQuery
+    value: ''
     value_type: string
-  - id: query_history_list
-    name: 历史查询结果列表
-    description: 存储每次查询的关键信息，用于后续生成图表、报告及对比分析，JSON数组格式
-    value: "[]"
+  - description: 用户问题关键字
+    id: fbd9cd17-8ebd-4513-850c-bc64d30bf811
+    name: keywords
+    selector:
+    - conversation
+    - keywords
+    value: ''
     value_type: string
-  - id: current_data_summary
-    name: 当前查询数据摘要
-    description: 本次查询数据的精简摘要，用于生成图表和报告，避免大模型超限
-    value: ""
+  - description: 所属部门
+    id: 75d83ac0-7100-4be8-a197-7756f59b87b7
+    name: factory
+    selector:
+    - conversation
+    - factory
+    value: ''
     value_type: string
-  - id: need_clarify
-    name: 是否需要反问澄清
-    description: 标记是否缺少关键查询参数，true需反问，false可直接执行
-    value: "false"
-    value_type: boolean
-  - id: clarify_question
-    name: 反问澄清话术
-    description: 缺少关键参数时，用于反问用户的话术，一次仅一个问题
-    value: ""
+  - description: 业务域
+    id: e26cc0e5-27f5-470f-9174-5b2de60bd1aa
+    name: domainData
+    selector:
+    - conversation
+    - domainData
+    value: ''
     value_type: string
-  - id: target_history_indexes
-    name: 目标历史查询索引
-    description: 用于对比或基于历史生成图表/报告时，指定的历史查询序号数组
-    value: "[]"
-    value_type: string
-  - id: factory
-    name: 查询工厂
-    description: 用户查询的目标工厂名称
-    value: ""
-    value_type: string
-  - id: indicator
-    name: 查询指标
-    description: 用户查询的具体指标（如产量、强度、能耗等）
-    value: ""
-    value_type: string
-  - id: time_range
-    name: 时间范围
-    description: 用户查询的时间范围（如近7天、2026-03-18~2026-03-24）
-    value: ""
-    value_type: string
-nodes:
-  - id: start_node
-    type: start
-    next: intent_recognition
-  - id: intent_recognition
-    type: llm
-    name: 意图识别与参数校验
-    description: 识别用户意图，判断查询参数是否完整，输出结构化结果
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.2
-    prompt: |
-      你是智能问数助手的意图识别与参数校验专家。
-      输入：
-      - 用户当前问题：{{#sys.query#}}
-      - 历史对话：{{#conversation.memories#}}
-      - 历史查询列表：{{#conversation.query_history_list#}}
-      输出严格JSON，无其他内容，JSON字段说明如下：
-      {
-        "intent": "取值为data/chart/report/chart_from_history/report_from_history/compare",
-        "is_complete": true/false（参数是否完整）,
-        "clarify_question": "为空表示不用反问，否则为反问话术，一次仅一个问题",
-        "target_history_indexes": [序号数组，对比或基于历史时使用],
-        "factory": "工厂名称，无则为空",
-        "indicator": "查询指标，无则为空",
-        "time_range": "时间范围，无则为空"
-      }
-      识别规则：
-      1. intent取值规则：
-         - data：仅查询数据，不生成图表/报告
-         - chart：查询数据并生成图表
-         - report：查询数据并生成报告
-         - chart_from_history：仅用历史查询数据生成图表，不重新查数
-         - report_from_history：仅用历史查询数据生成报告，不重新查数
-         - compare：对比多段历史查询数据，生成对比报告
-      2. 必须反问的场景（is_complete=false）：
-         - 未说明工厂，且历史对话中无明确工厂信息
-         - 未说明时间范围，且历史对话中无明确时间范围
-         - 未说明指标，且历史对话中无明确指标
-         - 意图为compare，但未说清对比哪两次历史查询
-      3. clarify_question示例：
-         - "请问你想查询哪个工厂的数据？"
-         - "请问你想查看哪个时间段的数据？"
-         - "请问你具体想对比哪两次查询结果？"
-    output_mode: json
-    next: check_clarify
-  - id: check_clarify
-    type: condition
-    name: 校验是否需要反问
-    condition: "{{#conversation.need_clarify#}}"
-    true_branch: clarify_node
-    false_branch: intent_route
-  - id: clarify_node
-    type: reply
-    name: 反问澄清
-    description: 当参数不完整时，向用户反问，获取关键信息
-    content: "{{#conversation.clarify_question#}}"
-    next: end_node
-  - id: intent_route
-    type: condition
-    name: 意图路由分支
-    condition: "{{#conversation.intent#}}"
-    branches:
-      - value: "data"
-        next: data_query
-      - value: "chart"
-        next: data_query
-      - value: "report"
-        next: data_query
-      - value: "chart_from_history"
-        next: chart_from_history
-      - value: "report_from_history"
-        next: report_from_history
-      - value: "compare"
-        next: compare_report
-  - id: data_query
-    type: tool
-    name: 数据查询（Text2SQL）
-    description: 根据工厂、指标、时间范围，执行Text2SQL查询数据库
-    tool: sql_query
-    parameters:
-      sql: "SELECT * FROM 数据表 WHERE 工厂 = '{{#conversation.factory#}}' AND 指标 = '{{#conversation.indicator#}}' AND 时间 BETWEEN '{{#conversation.time_range.split('~')[0].trim()}}' AND '{{#conversation.time_range.split('~')[1].trim()}}'"
-    next: data_summary
-  - id: data_summary
-    type: llm
-    name: 数据摘要生成
-    description: 将查询到的数据生成精简摘要，存入历史查询列表
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.3
-    prompt: |
-      根据本次数据查询结果，生成一段精简的数据摘要，用于后续生成图表和报告。
-      要求：
-      1. 只保留关键信息：工厂、时间范围、指标、核心数值（均值、最大值、最小值）、趋势（平稳/上升/下降）、异常点（如有）
-      2. 语言简洁，不超过300字，无多余修饰
-      3. 格式清晰，便于后续提取信息
-      本次查询信息：
-      - 工厂：{{#conversation.factory#}}
-      - 时间范围：{{#conversation.time_range#}}
-      - 指标：{{#conversation.indicator#}}
-      - 数据结果：{{#data_query.result#}}
-    output_mode: text
-    next: update_history
-  - id: update_history
-    type: code
-    name: 更新历史查询列表
-    description: 将当前查询的摘要信息，追加到query_history_list数组中
-    language: python
-    code: |
-      import json
-      # 读取当前历史查询列表
-      history_list = json.loads("{{#conversation.query_history_list#}}")
-      # 生成新的历史记录（index为当前列表长度+1）
-      new_history = {
-          "index": len(history_list) + 1,
-          "factory": "{{#conversation.factory#}}",
-          "time": "{{#conversation.time_range#}}",
-          "indicator": "{{#conversation.indicator#}}",
-          "summary": "{{#data_summary.result#}}",
-          "raw_data": "{{#data_query.result#}}"
-      }
-      # 追加新记录并更新变量
-      history_list.append(new_history)
-      conversation.set("query_history_list", json.dumps(history_list))
-      conversation.set("current_data_summary", "{{#data_summary.result#}}")
-    next: intent_after_query
-  - id: intent_after_query
-    type: condition
-    name: 查询后意图分支
-    condition: "{{#conversation.intent#}}"
-    branches:
-      - value: "data"
-        next: data_reply
-      - value: "chart"
-        next: chart_generate
-      - value: "report"
-        next: report_generate
-  - id: data_reply
-    type: reply
-    name: 纯数据回复
-    description: 仅向用户展示查询到的原始数据及精简摘要
-    content: |
-      📊 数据查询结果
-      工厂：{{#conversation.factory#}}
-      时间范围：{{#conversation.time_range#}}
-      指标：{{#conversation.indicator#}}
-      核心摘要：{{#conversation.current_data_summary#}}
-      原始数据：{{#data_query.result#}}
-    next: end_node
-  - id: chart_generate
-    type: tool
-    name: 图表生成
-    description: 根据查询到的数据或历史数据，生成对应图表（折线/柱状/饼图）
-    tool: chart_generator
-    parameters:
-      data: "{{#data_query.result#}}"
-      factory: "{{#conversation.factory#}}"
-      indicator: "{{#conversation.indicator#}}"
-      time_range: "{{#conversation.time_range#}}"
-      chart_type: "auto"
-    next: chart_reply
-  - id: chart_reply
-    type: reply
-    name: 图表+数据回复
-    description: 向用户展示生成的图表及数据摘要
-    content: |
-      📈 图表生成完成
-      工厂：{{#conversation.factory#}}
-      时间范围：{{#conversation.time_range#}}
-      指标：{{#conversation.indicator#}}
-      核心摘要：{{#conversation.current_data_summary#}}
-      图表：{{#chart_generate.result#}}
-    next: end_node
-  - id: report_generate
-    type: llm
-    name: 报告生成（单指标）
-    description: 根据当前查询数据，生成Markdown格式的单指标报告
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.3
-    prompt: |
-      请根据以下数据信息，按照指定模板生成Markdown格式的单指标数据报告，要求内容完整、逻辑清晰，语言专业简洁。
-      报告模板：
-      # 数据查询报告
-      ## 基本信息
-      -  **查询工厂**：{{factory}}
-      -  **时间范围**：{{time_range}}
-      -  **指标类型**：{{indicator}}
-      
-      ## 核心数据概览
-      {{data_summary}}
-      
-      ## 趋势分析
-      结合数据趋势（平稳/上升/下降），简要分析变化原因（如无明确原因，可写“整体趋势平稳，无明显异常波动”）。
-      
-      ## 异常与结论
-      指出数据中的异常点（如有），并给出简要结论；无异常则写“数据无明显异常，整体符合预期”。
-      
-      需填充的信息：
-      - factory：{{#conversation.factory#}}
-      - time_range：{{#conversation.time_range#}}
-      - indicator：{{#conversation.indicator#}}
-      - data_summary：{{#conversation.current_data_summary#}}
-      - 数据详情：{{#data_query.result#}}
-    output_mode: markdown
-    next: report_reply
-  - id: report_reply
-    type: reply
-    name: 报告回复
-    description: 向用户展示生成的Markdown报告
-    content: "{{#report_generate.result#}}"
-    next: end_node
-  - id: chart_from_history
-    type: tool
-    name: 基于历史数据生成图表
-    description: 读取历史查询数据，生成对应图表，不重新查数
-    tool: chart_generator
-    parameters:
-      data: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].raw_data#}}"
-      factory: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}"
-      indicator: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}"
-      time_range: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}"
-      chart_type: "auto"
-    next: chart_history_reply
-  - id: chart_history_reply
-    type: reply
-    name: 历史数据图表回复
-    description: 向用户展示基于历史数据生成的图表及摘要
-    content: |
-      📈 基于历史数据生成图表完成
-      历史查询序号：{{#json.parse(conversation.target_history_indexes)[0]#}}
-      工厂：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
-      时间范围：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
-      指标：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
-      核心摘要：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
-      图表：{{#chart_from_history.result#}}
-    next: end_node
-  - id: report_from_history
-    type: llm
-    name: 基于历史数据生成报告
-    description: 读取历史查询数据，生成Markdown格式的单指标报告，不重新查数
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.3
-    prompt: |
-      请根据以下历史数据信息，按照指定模板生成Markdown格式的单指标数据报告，要求内容完整、逻辑清晰，语言专业简洁。
-      报告模板：
-      # 数据查询报告（基于历史数据）
-      ## 基本信息
-      -  **查询工厂**：{{factory}}
-      -  **时间范围**：{{time_range}}
-      -  **指标类型**：{{indicator}}
-      -  **历史查询序号**：{{history_index}}
-      
-      ## 核心数据概览
-      {{data_summary}}
-      
-      ## 趋势分析
-      结合数据趋势（平稳/上升/下降），简要分析变化原因（如无明确原因，可写“整体趋势平稳，无明显异常波动”）。
-      
-      ## 异常与结论
-      指出数据中的异常点（如有），并给出简要结论；无异常则写“数据无明显异常，整体符合预期”。
-      
-      需填充的信息：
-      - history_index：{{#json.parse(conversation.target_history_indexes)[0]#}}
-      - factory：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
-      - time_range：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
-      - indicator：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
-      - data_summary：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
-      - 数据详情：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].raw_data#}}
-    output_mode: markdown
-    next: report_history_reply
-  - id: report_history_reply
-    type: reply
-    name: 历史数据报告回复
-    description: 向用户展示基于历史数据生成的Markdown报告
-    content: "{{#report_from_history.result#}}"
-    next: end_node
-  - id: compare_report
-    type: llm
-    name: 多历史数据对比报告
-    description: 读取指定的多个历史查询数据，生成Markdown格式的对比报告
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.3
-    prompt: |
-      请根据以下多个历史查询数据，按照指定模板生成Markdown格式的多工厂对比报告，要求对比清晰、分析深入，语言专业简洁。
-      报告模板：
-      # 多工厂数据对比报告
-      ## 对比范围
-      {{compare_scope}}
-      
-      ## 核心指标对比
-      | 工厂 | 时间范围 | 核心指标 | 均值 | 趋势 | 异常点 |
-      |-----|----------|----------|------|------|--------|
-      | {{factory1}} | {{time1}} | {{indicator1}} | {{avg1}} | {{trend1}} | {{abnormal1}} |
-      | {{factory2}} | {{time2}} | {{indicator2}} | {{avg2}} | {{trend2}} | {{abnormal2}} |
-      
-      ## 差异分析
-      对比两个工厂的核心数据，分析差异原因（如无明确原因，可写“两工厂数据存在一定差异，主要表现为xxx，具体原因需结合实际业务进一步排查”）。
-      
-      ## 结论与建议
-      基于对比结果，给出简要结论和合理建议（如“建议重点关注xxx工厂的xxx指标，优化相关流程以缩小与xxx工厂的差距”）。
-      
-      需填充的信息（target_history_indexes为两个历史序号，如[1,2]）：
-      - 历史序号1：{{#json.parse(conversation.target_history_indexes)[0]#}}
-      - 工厂1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
-      - 时间1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
-      - 指标1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
-      - 摘要1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
-      - 历史序号2：{{#json.parse(conversation.target_history_indexes)[1]#}}
-      - 工厂2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].factory#}}
-      - 时间2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].time#}}
-      - 指标2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].indicator#}}
-      - 摘要2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].summary#}}
-      要求：从摘要中提取均值、趋势、异常点，填充到表格中；compare_scope需明确写出两个对比项的历史序号、工厂、时间、指标。
-    output_mode: markdown
-    next: compare_reply
-  - id: compare_reply
-    type: reply
-    name: 对比报告回复
-    description: 向用户展示多历史数据对比的Markdown报告
-    content: "{{#compare_report.result#}}"
-    next: end_node
-  - id: end_node
-    type: end
-    name: 流程结束
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 欢迎使用智能问数助手！支持自然语言查询PPM项目管理、水泥配料、DPO、指标、数据监控等数据，支持趋势、排名、对比、统计类分析，直接输入需求即可一键获取数据结果～
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 罗定最近一周水泥强度预测
+    - 最近一周工单的根因分布
+    - 生料配料系统近一周均化效率变化趋势
+    - 华蓥2026年1月份1#水泥磨P.O42.5R品种，28天水泥强度预测值
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: 1769510257903-source-answer-target
+      selected: false
+      source: '1769510257903'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1769748574902-true-1769510257903-target
+      selected: false
+      source: '1769748574902'
+      sourceHandle: 'true'
+      target: '1769510257903'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1769748574902-fea3129b-b809-47fd-b288-ba394b71ad57-1769748764743-target
+      selected: false
+      source: '1769748574902'
+      sourceHandle: fea3129b-b809-47fd-b288-ba394b71ad57
+      target: '1769748764743'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1769748574902-db21306f-1bf5-4ee3-81b9-8b06a3215073-1769748792882-target
+      selected: false
+      source: '1769748574902'
+      sourceHandle: db21306f-1bf5-4ee3-81b9-8b06a3215073
+      target: '1769748792882'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: 1769748764743-source-answer-target
+      selected: false
+      source: '1769748764743'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: 1769748792882-source-answer-target
+      selected: false
+      source: '1769748792882'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: 1769770477716-source-1769770573752-target
+      selected: false
+      source: '1769770477716'
+      sourceHandle: source
+      target: '1769770573752'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: 1769770573752-true-1769657472101-target
+      selected: false
+      source: '1769770573752'
+      sourceHandle: 'true'
+      target: '1769657472101'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: 1769770573752-65deaa88-7df1-409a-a118-976b1fa3d826-17700074178540-target
+      selected: false
+      source: '1769770573752'
+      sourceHandle: 65deaa88-7df1-409a-a118-976b1fa3d826
+      target: '17700074178540'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 17700074178540-source-answer-target
+      selected: false
+      source: '17700074178540'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: http-request
+        targetType: llm
+      id: 1769581080423-fail-branch-17700074178540-target
+      selected: false
+      source: '1769581080423'
+      sourceHandle: fail-branch
+      target: '17700074178540'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: http-request
+      id: llm-source-1769581080423-target
+      selected: false
+      source: llm
+      sourceHandle: source
+      target: '1769581080423'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: code
+      id: 1769770573752-true-1770289276079-target
+      selected: false
+      source: '1769770573752'
+      sourceHandle: 'true'
+      target: '1770289276079'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: if-else
+      id: 1770289276079-source-1769748574902-target
+      selected: false
+      source: '1770289276079'
+      sourceHandle: source
+      target: '1769748574902'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: 1769581080423-source-1770289586784-target
+      selected: false
+      source: '1769581080423'
+      sourceHandle: source
+      target: '1770289586784'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1770289586784-fail-branch-17700074178540-target
+      selected: false
+      source: '1770289586784'
+      sourceHandle: fail-branch
+      target: '17700074178540'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1770289276079-fail-branch-17700074178540-target
+      selected: false
+      source: '1770289276079'
+      sourceHandle: fail-branch
+      target: '17700074178540'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: tool
+      id: 1770289586784-source-1769497130423-target
+      selected: false
+      source: '1770289586784'
+      sourceHandle: source
+      target: '1769497130423'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: 1769496563446-source-1772171506106-target
+      selected: false
+      source: '1769496563446'
+      sourceHandle: source
+      target: '1772171506106'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: llm
+      id: 1772171506106-source-1770805779308-target
+      selected: false
+      source: '1772171506106'
+      sourceHandle: source
+      target: '1770805779308'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: assigner
+      id: 1769657472101-source-17721771708300-target
+      selected: false
+      source: '1769657472101'
+      sourceHandle: source
+      target: '17721771708300'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: assigner
+        targetType: answer
+      id: 17721771708300-source-answer-target
+      selected: false
+      source: '17721771708300'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: 1770805779308-source-llm-target
+      selected: false
+      source: '1770805779308'
+      sourceHandle: source
+      target: llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: code
+      id: 1769497130423-source-1772419999603-target
+      selected: false
+      source: '1769497130423'
+      sourceHandle: source
+      target: '1772419999603'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1772419999603-source-1769770477716-target
+      selected: false
+      source: '1772419999603'
+      sourceHandle: source
+      target: '1769770477716'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1772419999603-fail-branch-17700074178540-target
+      source: '1772419999603'
+      sourceHandle: fail-branch
+      target: '17700074178540'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - default: Bearer 
+          hide: true
+          hint: ''
+          label: authorization
+          max_length: 2048
+          options: []
+          placeholder: ''
+          required: false
+          type: paragraph
+          variable: authorization
+      height: 109
+      id: '1769496563446'
+      position:
+        x: -185.3855422079339
+        y: 12.795493896203197
+      positionAbsolute:
+        x: -185.3855422079339
+        y: 12.795493896203197
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: Qwen3-Next
+          provider: langgenuis/openai_api_compatible
+        prompt_config:
+          jinja2_variables: []
+        prompt_template:
+        - edition_type: basic
+          id: 93e138a8-0e68-4624-8202-a47bda67f0b7
+          role: system
+          text: "你是数据平台数据查询语义解析助手，可联想匹配数据域、映射工厂全称，根据用户提问 {{#1770805779308.text#}} 执行提取，严格遵循以下规则，仅输出提取结果，无任何额外内容：\n\n=== 核心提取规则 ===\n1. 固定提取字段：数据域（dataDomain）、描述（keyWords）、所属部门（factory），字段不可增删修改，无匹配值返回空字符串；\n2. 输出格式：严格按照 \"dataDomain：XXX，factory：XXX，keyWords：XXX\" 格式输出（无多余空格、标点）；\n\n=== 数据域（dataDomain）匹配规则 ===\n3. 匹配优先级（从高到低，优先级1>优先级2>优先级3）：\n   - 优先级2（关键词匹配）：\n     ✅ 包含「煤价、原煤价格、煤炭成本、全行业用电、动力煤价格、进口煤」→ \"煤价数据\"；\n     ✅ 包含「PPM、项目、进度、工期、任务、月度目标、故事、需求」→ \"PPM\"；\n     ✅ 包含「智能诊断、指标诊断、根因诊断、诊断结果评估、生产工序诊断、工序维度诊断、诊断结论摘要、综合诊断报告、故障、预警、生产指标聚合、指标分组、指标关联结果」→ \"智能诊断\"；\n     ✅ 包含「生料、配料、配比」→ \"生料配料\"；\n     ✅ 包含「模型启用、模型版本、DPO警报、DPO、能耗、煅烧、生产数据、点位」→ \"DPO\"；\n     ✅ 包含「熟料强度、水泥强度」→ \"模型训练数据\"；\n   - 优先级1（强制匹配，优先级最高）：\n     ✅ 输入包含「工单、工时」任意一个 → 数据域为\"PPM\"；\n     ✅ 输入包含「指标、在线率」任意一个 → 数据域为\"指标目录\"；\n     ✅ 输入包含「数据上云、监控」任意一个 → 数据域为\"数据监控\"；\n     ✅ 输入包含「合格率」任意一个 → 数据域为\"水泥配料合格率\"；\n     ✅ 输入包含「开窑、开磨」任意一个 → 数据域为\"模型训练数据\"；\n   - 优先级3（无匹配，优先级最低）：返回空字符串；\n\n=== 描述（keyWords）提取规则 ===\n4. 提取范围：从query中提取「数据表名称、查询维度相关核心名词、数量词、时间词」；\n5. 提取规则：\n   - 核心名词判定：水泥行业核心维度（熟料、煅烧、能耗、配比、强度、工单、工时等）、数据属性（价格、进度、预警等）；\n   - 去重处理：提取结果去重，用中文逗号拼接；\n   - 无匹配：返回空字符串；\n\n=== 所属部门（factory）解析规则 ===\n6. 特殊场景：数据域为「PPM、水泥配料合格率、数据监控」中任意一个时，所属部门强制返回空字符串；\n7. 工厂名解析规则：\n   - 提取范围：仅从query中提取工厂名/区域名；\n   - 映射规则：简称按以下映射表转为全称，多厂名用中文逗号拼接；\n   - 无匹配：返回空字符串；\n   【工厂名映射表】\n   宾州→黑龙江省宾州水泥有限公司、汪清北方→汪清北方水泥有限公司、白山→白山北方水泥有限公司、伊春北方→伊春北方水泥有限公司、黑河关鸟河→黑河关鸟河水泥有限责任公司、新乡平原→河南新乡平原同力水泥有限公司、邓州中联→邓州中联水泥有限公司、保定中联→保定中联水泥有限公司、济源→济源中联水泥有限公司、腾跃→腾跃同力水泥有限公司、南阳→南阳中联水泥有限公司、洛阳→洛阳中联水泥有限公司、豫龙→驻马店市豫龙同力水泥有限公司、省同力→河南省同力水泥有限公司、登封登电→登封中联登电水泥有限公司、南阳卧龙→南阳中联卧龙水泥有限公司、临城福石→临城中联福石水泥有限公司、玉山南方→江西玉山南方水泥有限公司、上高南方→江西上高南方水泥有限公司、安福南方→江西安福南方水泥有限公司、兴国南方→江西兴国南方水泥有限公司、南城南方→江西南城南方水泥有限公司、永丰南方→江西永丰南方水泥有限公司、芦溪南方→江西芦溪南方水泥有限公司、丰城南方→江西丰城南方水泥有限公司、泰和南方→江西泰和南方水泥有限公司、含山南方→含山南方水泥有限公司、长兴南方→长兴南方水泥有限公司、山亚南方→山亚南方水泥有限公司、合肥南方→合肥南方水泥有限公司、中材安徽→中材安徽水泥有限公司、南京中联→南京中联水泥有限公司、江山虎山→江山南方水泥有限公司虎山生产区、宜兴天山→宜兴天山水泥有限责任公司、江山高新→江山南方水泥有限公司高新生产区、安徽广德→安徽广德南方水泥有限公司、海盐秦山→海盐秦山南方水泥有限公司、广德洪山→安徽广德洪山南方水泥有限公司、宜城南方→宜城南方水泥有限公司、湖州白岘→湖州白岘南方水泥有限公司、滁州中联→滁州中联水泥有限公司、溧水天山→溧水天山水泥有限公司、常山南方→常山南方水泥有限公司、建德南方→建德南方水泥有限公司、三明南方→三明南方水泥有限公司、天水→天水祁连山水泥有限公司、青海→青海祁连山水泥有限公司、西藏→西藏中材祁连山水泥有限公司、漳县→祁连山漳县水泥厂、永登→永登祁连山水泥有限公司、成县→成县祁连山水泥有限公司、古浪→古浪祁连山水泥有限公司、平凉→平凉祁连山水泥有限公司、泰山石膏→泰山石膏有限公司、石膏山东区域→石膏山东区域、南方水泥→南方区域、中联水泥→中联区域、西南水泥→西南区域、新疆水泥→新疆区域、祁连山水泥→祁连山区域、江西水泥→江西区域、北方水泥→北方区域、河南区域→河南区域、云贵区域→云贵区域、中南水泥→中南区域、四川国大→四川国大水泥有限公司、北川中联→北川中联水泥有限公司、四川筠连→四川筠连西南水泥有限公司、达州利森→四川省达州利森水泥有限公司、旺苍西南→四川旺苍西南水泥有限公司、德阳利森→四川德阳利森建材集团有限公司、德胜水泥→四川德胜集团水泥有限公司、广元高力→广元市高力实业水泥有限公司、四川华蓥→四川华蓥西南水泥有限公司、峨眉山→四川峨眉山西南水泥有限公司、昭觉金鑫→昭觉金鑫水泥有限责任公司、重庆万州→重庆万州西南水泥有限公司、四川兆迪→四川省兆迪水泥有限责任公司、雅安西南→四川雅安西南水泥有限公司、会东利森→会东利森水泥有限公司、安县中联→安县中联水泥有限公司、克州天山→克州天山水泥有限责任公司、阜康天山→新疆阜康天山水泥有限责任公司、伊犁天山→伊犁天山水泥有限责任公司、阿克苏→阿克苏天山多浪水泥有限责任公司、哈密天山→哈密天山水泥有限责任公司、博海水泥→博海水泥有限公司、米东天山→新疆米东天山水泥有限责任公司、库尔勒→库尔勒天山水泥有限责任公司、若羌天山→若羌天山水泥有限责任公司、云南兴建→云南兴建水泥有限公司、正安→正安西南水泥有限公司、遵义→遵义赛德水泥有限公司、古城西南→丽江古城西南水泥有限公司、富源西南→云南富源西南水泥有限公司、普洱天恒→云南普洱天恒水泥有限责任公司、惠水→贵州惠水西南水泥有限公司、威宁西南→贵州威宁西南水泥有限公司、福泉西南→贵州福泉西南水泥有限公司、铜仁→贵州铜仁西南水泥有限公司、播州→播州西南水泥有限公司、毕节→毕节西南水泥有限公司、沿河西南→贵州沿河西南水泥有限公司、思南西南→贵州思南西南水泥有限公司、东平中联→东平中联水泥有限公司、新泰中联→新泰中联泰丰水泥有限公司、泰安中联→泰安中联水泥有限公司、济宁中联→济宁中联水泥有限公司、青州中联→青州中联水泥有限公司、沂南中联→沂南中联水泥有限公司、平邑中联→平邑中联水泥有限公司、泰山中联→泰山中联水泥有限公司、枣庄中联→枣庄中联水泥有限公司、徐州中联→徐州中联水泥有限公司、临沂中联→临沂中联水泥有限公司、蚌埠中联→蚌埠中联水泥有限公司、鲁南中联→鲁南中联水泥有限公司、滕州中联→滕州中联水泥有限公司、中材株洲→中材株洲水泥有限责任公司、浏阳南方→湖南浏阳南方水泥有限公司、耒阳南方→湖南耒阳南方水泥有限公司、韶峰南方→湖南韶峰南方水泥有限公司、中材云浮→中材天山云浮水泥有限公司、广西金鲤→广西金鲤水泥有限公司、金磊南方→湖南金磊南方水泥有限公司、桃江南方→湖南桃江南方水泥有限公司、崇左南方→崇左南方水泥有限公司、桂林南方→桂林南方水泥有限公司、中材亨达→中材亨达水泥有限公司、中材罗定→中材罗定水泥有限公司、湖南常德→湖南常德南方水泥有限公司、邵阳南方→湖南邵阳南方水泥有限公司；\n\n=== 边界场景补充规则 ===\n8. 多关键词冲突：query包含多个数据域关键词时，按「优先级1→优先级2」顺序匹配，取最高优先级结果；\n9. 空值处理：query为空/无任何匹配内容时，三个字段均返回空字符串；\n10. 术语统一：\"描述\"与输出字段\"keyWords\"为同一概念，无区别；\n11、提取内容以json格式输出\n12、考虑多轮对话，如果上次提问与当前提问相关，则把上次提问提取的内容自动作为本次提问提取内容进行合并"
+        selected: false
+        structured_output:
+          schema:
+            additionalProperties: false
+            properties:
+              dataDomain:
+                type: string
+              factory:
+                type: string
+              keyWords:
+                type: string
+            required: []
+            type: object
+        structured_output_enabled: true
+        title: 元数据关键字提取
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: llm
+      position:
+        x: 1012.2942138125643
+        y: 33.7954938962032
+      positionAbsolute:
+        x: 1012.2942138125643
+        y: 33.7954938962032
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#1769657472101.text#}}
+
+          {{#17700074178540.text#}}
+
+          {{#1769510257903.text#}}
+
+          {{#1769748792882.text#}}
+
+          {{#1769748764743.text#}}'
+        selected: false
+        title: 直接回复
+        type: answer
+        variables: []
+      height: 160
+      id: answer
+      position:
+        x: 4237.316211559078
+        y: 220
+      positionAbsolute:
+        x: 4237.316211559078
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: 用户输入的自然语言查询
+            ja_JP: 用户输入的自然语言查询
+            pt_BR: 用户输入的自然语言查询
+            zh_Hans: 用户输入的自然语言查询
+          label:
+            en_US: query
+            ja_JP: query
+            pt_BR: query
+            zh_Hans: query
+          llm_description: 用户输入的自然语言查询
+          max: null
+          min: null
+          name: query
+          options: []
+          placeholder:
+            en_US: 用户输入的自然语言查询
+            ja_JP: 用户输入的自然语言查询
+            pt_BR: 用户输入的自然语言查询
+            zh_Hans: 用户输入的自然语言查询
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: 认证令牌（必选）
+            ja_JP: 认证令牌（必选）
+            pt_BR: 认证令牌（必选）
+            zh_Hans: 认证令牌（必选）
+          label:
+            en_US: authorization
+            ja_JP: authorization
+            pt_BR: authorization
+            zh_Hans: authorization
+          llm_description: 认证令牌（必选）
+          max: null
+          min: null
+          name: authorization
+          options: []
+          placeholder:
+            en_US: 认证令牌（必选）
+            ja_JP: 认证令牌（必选）
+            pt_BR: 认证令牌（必选）
+            zh_Hans: 认证令牌（必选）
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: 需要查询的数据表id列表
+            ja_JP: 需要查询的数据表id列表
+            pt_BR: 需要查询的数据表id列表
+            zh_Hans: 需要查询的数据表id列表
+          label:
+            en_US: table_ids
+            ja_JP: table_ids
+            pt_BR: table_ids
+            zh_Hans: table_ids
+          llm_description: 需要查询的数据表id列表
+          max: null
+          min: null
+          name: table_ids
+          options: []
+          placeholder:
+            en_US: 需要查询的数据表id列表
+            ja_JP: 需要查询的数据表id列表
+            pt_BR: 需要查询的数据表id列表
+            zh_Hans: 需要查询的数据表id列表
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: array
+        params:
+          authorization: ''
+          query: ''
+          table_ids: ''
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FEF7C3'
+          content: 🕵️
+        provider_id: cd1dc8bf-a1a5-489e-8b33-fdbfa36acb43
+        provider_name: text2SqlByTableIds
+        provider_type: api
+        selected: false
+        title: 数据查询
+        tool_configurations: {}
+        tool_description: 自然语言转SQL（带表ID）
+        tool_label: textToSqlWithTableIds
+        tool_name: textToSqlWithTableIds
+        tool_node_version: '2'
+        tool_parameters:
+          authorization:
+            type: mixed
+            value: '{{#1769496563446.authorization#}}'
+          query:
+            type: mixed
+            value: '{{#1770805779308.text#}}'
+          table_ids:
+            type: variable
+            value:
+            - '1770289586784'
+            - id
+        type: tool
+      height: 52
+      id: '1769497130423'
+      position:
+        x: 2181.457331280162
+        y: -123.15458432958847
+      positionAbsolute:
+        x: 2181.457331280162
+        y: -123.15458432958847
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: chart title
+            ja_JP: chart title
+            pt_BR: chart title
+            zh_Hans: 图表的标题
+          label:
+            en_US: title
+            ja_JP: title
+            pt_BR: title
+            zh_Hans: 标题
+          llm_description: chart title
+          max: null
+          min: null
+          name: title
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: data for generating chart, each number should be separated by ";"
+            ja_JP: data for generating chart, each number should be separated by ";"
+            pt_BR: data for generating chart, each number should be separated by ";"
+            zh_Hans: 用于生成线性图表的数据，每个数字之间用 ";" 分隔
+          label:
+            en_US: data
+            ja_JP: data
+            pt_BR: data
+            zh_Hans: 数据
+          llm_description: data for generating linear chart, data should be a string
+            contains a list of numbers like "1;2;3;4;5"
+          max: null
+          min: null
+          name: data
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: X axis for chart, each text should be separated by ";"
+            ja_JP: X axis for chart, each text should be separated by ";"
+            pt_BR: X axis for chart, each text should be separated by ";"
+            zh_Hans: 线性图表的 x 轴，每个文本之间用 ";" 分隔
+          label:
+            en_US: X Axis
+            ja_JP: X Axis
+            pt_BR: X Axis
+            zh_Hans: x 轴
+          llm_description: x axis for linear chart, x axis should be a string contains
+            a list of texts like "a;b;c;1;2" in order to match the data
+          max: null
+          min: null
+          name: x_axis
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        params:
+          data: ''
+          title: ''
+          x_axis: ''
+        plugin_id: langgenuis/echarts
+        plugin_unique_identifier: langgenuis/echarts:0.0.1
+        provider_icon: ''
+        provider_id: langgenuis/echarts
+        provider_name: ECharts
+        provider_type: builtin
+        selected: false
+        title: 线性图表
+        tool_configurations: {}
+        tool_description: 线性图表
+        tool_label: 线性图表
+        tool_name: line_chart
+        tool_node_version: '2'
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#1770289276079.data#}}'
+          title:
+            type: mixed
+            value: '{{#1770289276079.title#}}'
+          x_axis:
+            type: mixed
+            value: '{{#1770289276079.x_axis#}}'
+        type: tool
+      height: 52
+      id: '1769510257903'
+      position:
+        x: 3873
+        y: 395.549135917549
+      positionAbsolute:
+        x: 3873
+        y: 395.549135917549
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: key-value-2640
+            key: ''
+            type: text
+            value: "{\n\t\"vector\": \"{{#1770805779308.text#}}\",\n\t\"param\": {\n\t\t\"entity_des\": \"{{#llm.structured_output.dataDomain#}}\",\n\t\t\"tags\": \"{{#llm.structured_output.factory#}}\",\n\t\t\"factory\": \"{{#llm.structured_output.factory#}}\"\n\t},\n\t\"pageSize\": 5\n}"
+          type: json
+        error_strategy: fail-branch
+        headers: Authorization: {{#1769496563446.authorization#}}
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 1000
+        selected: false
+        ssl_verify: false
+        timeout:
+          connect: 5
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+          read: 10
+          write: 5
+        title: 查询相关元数据信息
+        type: http-request
+        url: https://cic.mdiri.com/data-model/api/v1/metadata/search
+        variables: []
+      height: 190
+      id: '1769581080423'
+      position:
+        x: 1372
+        y: 0
+      positionAbsolute:
+        x: 1372
+        y: 0
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0
+          mode: chat
+          name: Qwen3-Next
+          provider: langgenuis/openai_api_compatible
+        prompt_template:
+        - id: 3214b1da-5ae4-4104-898f-b1cff6a18d08
+          role: system
+          text: '你是水泥行业数据查询的专业总结助手，核心任务是根据上游数据预处理节点的输出{{#1772419999603.processed_data#}}和用户查询{{#1770805779308.text#}}，输出结果。
+
+
+            基于上游有效数据直接提炼核心信息，仅保留关键量化指标、变化趋势、跨维度对比结论，表述简洁专业，无冗余铺垫、背景说明；字符严格控制在200字内；无趋势/对比数据时仅罗列核心单值指标，不强行补充无关内容。
+
+            若包含可结构化数据，**先输出文字总结，再在文字下方输出表格**；无合适数据则不生成表格。
+
+
+            设备运行状态：0（开机），1（停机）'
+        selected: false
+        title: 内容总结
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1769657472101'
+      position:
+        x: 3153.2216639928306
+        y: -31.992463903209725
+      positionAbsolute:
+        x: 3153.2216639928306
+        y: -31.992463903209725
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is
+            id: 08a969f6-271a-4fef-8be8-dba3b4655a7d
+            value: line
+            varType: string
+            variable_selector:
+            - '1770289276079'
+            - chart_type
+          id: 'true'
+          logical_operator: and
+        - case_id: fea3129b-b809-47fd-b288-ba394b71ad57
+          conditions:
+          - comparison_operator: contains
+            id: e69fd812-eab6-4958-94a7-c871fedbf1d9
+            value: bar
+            varType: string
+            variable_selector:
+            - '1770289276079'
+            - chart_type
+          id: fea3129b-b809-47fd-b288-ba394b71ad57
+          logical_operator: and
+        - case_id: db21306f-1bf5-4ee3-81b9-8b06a3215073
+          conditions:
+          - comparison_operator: contains
+            id: a82616d9-4777-4cc1-8d0e-8350350cb26e
+            value: pie
+            varType: string
+            variable_selector:
+            - '1770289276079'
+            - chart_type
+          id: db21306f-1bf5-4ee3-81b9-8b06a3215073
+          logical_operator: and
+        selected: false
+        title: 图表选择
+        type: if-else
+      height: 220
+      id: '1769748574902'
+      position:
+        x: 3516.22166399283
+        y: 560.8740958100043
+      positionAbsolute:
+        x: 3516.22166399283
+        y: 560.8740958100043
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: chart title
+            ja_JP: chart title
+            pt_BR: chart title
+            zh_Hans: 图表的标题
+          label:
+            en_US: title
+            ja_JP: title
+            pt_BR: title
+            zh_Hans: 标题
+          llm_description: chart title
+          max: null
+          min: null
+          name: title
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: data for generating chart, each number should be separated by ";"
+            ja_JP: data for generating chart, each number should be separated by ";"
+            pt_BR: data for generating chart, each number should be separated by ";"
+            zh_Hans: 用于生成柱状图的数据，每个数字之间用 ";" 分隔
+          label:
+            en_US: data
+            ja_JP: data
+            pt_BR: data
+            zh_Hans: 数据
+          llm_description: data for generating bar chart, data should be a string
+            contains a list of numbers like "1;2;3;4;5"
+          max: null
+          min: null
+          name: data
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: X axis for chart, each text should be separated by ";"
+            ja_JP: X axis for chart, each text should be separated by ";"
+            pt_BR: X axis for chart, each text should be separated by ";"
+            zh_Hans: 柱状图的 x 轴，每个文本之间用 ";" 分隔
+          label:
+            en_US: X Axis
+            ja_JP: X Axis
+            pt_BR: X Axis
+            zh_Hans: x 轴
+          llm_description: x axis for bar chart, x axis should be a string contains
+            a list of texts like "a;b;c;1;2" in order to match the data
+          max: null
+          min: null
+          name: x_axis
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        params:
+          data: ''
+          title: ''
+          x_axis: ''
+        plugin_id: langgenuis/echarts
+        plugin_unique_identifier: langgenuis/echarts:0.0.1
+        provider_icon: ''
+        provider_id: langgenuis/echarts
+        provider_name: ECharts
+        provider_type: builtin
+        selected: false
+        title: 柱状图
+        tool_configurations: {}
+        tool_description: 柱状图
+        tool_label: 柱状图
+        tool_name: bar_chart
+        tool_node_version: '2'
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#1770289276079.data#}}'
+          title:
+            type: mixed
+            value: '{{#1770289276079.title#}}'
+          x_axis:
+            type: mixed
+            value: '{{#1770289276079.x_axis#}}'
+        type: tool
+      height: 52
+      id: '1769748764743'
+      position:
+        x: 3873
+        y: 501.5516479498124
+      positionAbsolute:
+        x: 3873
+        y: 501.5516479498124
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: chart title
+            ja_JP: chart title
+            pt_BR: chart title
+            zh_Hans: 图表的标题
+          label:
+            en_US: title
+            ja_JP: title
+            pt_BR: title
+            zh_Hans: 标题
+          llm_description: chart title
+          max: null
+          min: null
+          name: title
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: data for generating chart, each number should be separated by ";"
+            ja_JP: data for generating chart, each number should be separated by ";"
+            pt_BR: data for generating chart, each number should be separated by ";"
+            zh_Hans: 用于生成饼图的数据，每个数字之间用 ";" 分隔
+          label:
+            en_US: data
+            ja_JP: data
+            pt_BR: data
+            zh_Hans: 数据
+          llm_description: data for generating pie chart, data should be a string
+            contains a list of numbers like "1;2;3;4;5"
+          max: null
+          min: null
+          name: data
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Categories for chart, each category should be separated by ";"
+            ja_JP: Categories for chart, each category should be separated by ";"
+            pt_BR: Categories for chart, each category should be separated by ";"
+            zh_Hans: 饼图的分类，每个分类之间用 ";" 分隔
+          label:
+            en_US: Categories
+            ja_JP: Categories
+            pt_BR: Categories
+            zh_Hans: 分类
+          llm_description: categories for pie chart, categories should be a string
+            contains a list of texts like "a;b;c;1;2" in order to match the data,
+            each category should be split by ";"
+          max: null
+          min: null
+          name: categories
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        params:
+          categories: ''
+          data: ''
+          title: ''
+        plugin_id: langgenuis/echarts
+        plugin_unique_identifier: langgenuis/echarts:0.0.1
+        provider_icon: ''
+        provider_id: langgenuis/echarts
+        provider_name: ECharts
+        provider_type: builtin
+        selected: false
+        title: 饼图
+        tool_configurations: {}
+        tool_description: 饼图
+        tool_label: 饼图
+        tool_name: pie_chart
+        tool_node_version: '2'
+        tool_parameters:
+          categories:
+            type: mixed
+            value: '{{#1770289276079.categories#}}'
+          data:
+            type: mixed
+            value: '{{#1770289276079.data#}}'
+          title:
+            type: mixed
+            value: '{{#1770289276079.title#}}'
+        type: tool
+      height: 52
+      id: '1769748792882'
+      position:
+        x: 3873
+        y: 629.329983956982
+      positionAbsolute:
+        x: 3873
+        y: 629.329983956982
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0
+          mode: chat
+          name: Qwen3-Next
+          provider: langgenuis/openai_api_compatible
+        prompt_template:
+        - id: ffd0dd84-266c-4f3d-a25f-568eeb283c01
+          role: system
+          text: "# 核心任务\n你是text2sql结果转ECharts结构化数据助手，输入为数据预处理节点的结果({{#1772419999603.processed_data#}})和查询语句({{#1770805779308.text#}})，仅返回符合要求的标准JSON字符串，无任何额外内容、注释、换行。\n\n# 输出格式（固定，不可增删字段/修改类型）\n{\"has_valid_data\":true/false,\"echarts_data\":{\"title\":\"\",\"x_axis\":[\"\"],\"data\":[0]},\"chart_type\":\"line/bar/pie\"}\n\n# 执行规则（优先级从高到低）\n## 1. 数据有效性判定\n- 条件：text2sql的\"success\"为true 且 data字段含非空/非null的数据 → has_valid_data=true\n- 其他情况 → has_valid_data=false\n\n## 2. ECharts数据生成\n- has_valid_data=false：echarts_data={\"title\":\"暂无匹配数据\",\"x_axis\":[\"无数据\"],\"data\":[0]}\n- has_valid_data=true：\n  - title：所属工厂+查询维度+时间范围+核心指标（无则省略）\n  - x_axis：从data提取分类/时间/工厂标签，生成纯字符串数组（无则省略）\n  - data：从data提取核心量化指标，生成纯数值数组（无则省略）\n\n## 3. 图表类型判断\n1. 数据含连续时间维度（年/月/日/小时/周，按时间排序）→ chart_type=line\n2. 数据为占比/构成/比例类（含相关关键词或数值和为100）→ chart_type=pie\n3. 其余情况 → chart_type=bar\n\n# 输出示例\n## 有数据\n{\"has_valid_data\":true,\"echarts_data\":{\"title\":\"宾州水泥1-3月原煤价格走势\",\"x_axis\":[\"1月\",\"2月\",\"3月\"],\"data\":[800,850,820]},\"chart_type\":\"line\"}\n## 无数据\n{\"has_valid_data\":false,\"echarts_data\":{\"title\":\"暂无匹配数据\",\"x_axis\":[\"无数据\"],\"data\":[0]},\"chart_type\":\"bar\"}\n\n# 强制要求\n1. 仅返回JSON字符串，无任何其他字符；\n2. 验证有效数据时采用短路判断（找到第一个有效值即判定true）；\n3. x_axis为纯字符串数组、data为纯数值数组、chart_type仅line/bar/pie。"
+        selected: false
+        structured_output:
+          schema:
+            additionalProperties: false
+            properties:
+              chart_type:
+                enum:
+                - line
+                - bar
+                - pie
+                type: string
+              echarts_data:
+                properties:
+                  data:
+                    items:
+                      type: number
+                    type: array
+                  title:
+                    type: string
+                  x_axis:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - title
+                - x_axis
+                - data
+                type: object
+              has_valid_data:
+                type: boolean
+            required:
+            - has_valid_data
+            - echarts_data
+            - chart_type
+            type: object
+        structured_output_enabled: true
+        title: 数据解析 + 有效性 + 图表类型判断
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1769770477716'
+      position:
+        x: 2461.8541123488276
+        y: 106.55918404660275
+      positionAbsolute:
+        x: 2461.8541123488276
+        y: 106.55918404660275
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is
+            id: 21a8c834-cf3c-476c-968f-94a0243a613b
+            value: true
+            varType: boolean
+            variable_selector:
+            - '1769770477716'
+            - structured_output
+            - has_valid_data
+          id: 'true'
+          logical_operator: and
+        - case_id: 65deaa88-7df1-409a-a118-976b1fa3d826
+          conditions:
+          - comparison_operator: is
+            id: 86a9c03e-dc1d-482d-b86d-766a3f5b7aef
+            value: false
+            varType: boolean
+            variable_selector:
+            - '1769770477716'
+            - structured_output
+            - has_valid_data
+          id: 65deaa88-7df1-409a-a118-976b1fa3d826
+          logical_operator: and
+        selected: false
+        title: 数据有效性判断
+        type: if-else
+      height: 172
+      id: '1769770573752'
+      position:
+        x: 2770.0012560161317
+        y: 106.55918404660275
+      positionAbsolute:
+        x: 2770.0012560161317
+        y: 106.55918404660275
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0
+          mode: chat
+          name: Qwen3-Next
+          provider: langgenuis/openai_api_compatible
+        prompt_template:
+        - id: 3214b1da-5ae4-4104-898f-b1cff6a18d08
+          role: system
+          text: "# 任务目标\n基于用户输入的自然语言查询（内容：{{#1770805779308.text#}}）的语义，结合该查询所属的数据域（dataDomain：{{#llm.structured_output.dataDomain#}}），生成3个贴合用户问数习惯的相似查询示例，帮助用户调整问法获取有效数据。\n\n# 输出规则\n1. 固定开头：本次查询暂无匹配数据～\n2. 示例格式：每个示例以「📌 可尝试这样查询：」开头单独一行；示例需贴合用户输入的语义场景，符合数据域的业务逻辑，语言为自然口语化表述。\n3. 输出要求：仅返回文本，无JSON、无额外注释，严格按格式输出，示例数量固定为3个。\n4. 语义适配规则：\n   - 若用户输入包含「产量/销量/库存」（通用生产数据域）：示例围绕生产数据的趋势、排名、区域/工厂对比展开；\n   - 若用户输入包含「能耗/配料/强度」（生料配料/DPO数据域）：示例围绕工序指标的变化、根因分析、合格率统计展开；\n   - 若用户输入包含「工单/项目/进度」（项目管理域）：示例围绕管理数据的完成率、达标情况、未完成原因分析展开；\n   - 若用户输入包含「诊断/故障/预警」（智能诊断数据域）：示例围绕诊断结果、故障次数、异常占比分析展开；\n   - 通用适配：所有示例需包含「主体（工厂/区域/部门）+ 指标/工序 + 分析维度（趋势/对比/统计）」核心结构，且主体/指标需贴合数据域特性。\n\n# 输出示例（参考）\n用户输入：邓州中联熟料产量多少\n输出：\n本次查询暂无匹配数据～\n📌 可尝试这样查询：邓州中联本月熟料产量统计\n📌 可尝试这样查询：邓州中联近7天熟料产量变化趋势\n📌 可尝试这样查询：邓州中联熟料产量与区域均值对比"
+        selected: false
+        title: 无有效数据
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '17700074178540'
+      position:
+        x: 3516.22166399283
+        y: 220
+      positionAbsolute:
+        x: 3516.22166399283
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\nimport re\nfrom datetime import datetime\nfrom typing import List, Dict, Any\n\ndef main(structured_output: Any) -> Dict[str, str]:\n    default_result: Dict[str, str] = {\n        \"chart_type\": \"\",\n        \"title\": \"\",\n        \"x_axis\": \"\",\n        \"data\": \"\",\n        \"categories\": \"\"\n    }\n    \n    try:\n        if isinstance(structured_output, dict):\n            data = structured_output\n        elif isinstance(structured_output, str):\n            if not structured_output.strip():\n                default_result[\"title\"] = \"输入数据为空\"\n                return default_result\n            data = json.loads(structured_output)\n        else:\n            default_result[\"title\"] = f\"不支持的输入类型: {type(structured_output).__name__}\"\n            return default_result\n        \n        chart_type = data.get(\"chart_type\", \"\")\n        echarts_data = data.get(\"echarts_data\", {})\n        title = echarts_data.get(\"title\", \"\")\n        x_axis = echarts_data.get(\"x_axis\", [])\n        data_values = echarts_data.get(\"data\", [])\n        \n        def sort_and_convert_time_axis(axis_list: List[str], data_list: List[Any]) -> tuple[List[str], List[Any]]:\n            time_patterns = [\n                (r'(\\d{4})年(\\d{1,2})月', '%Y年%m月'),\n                (r'(\\d{1,2})月(\\d{1,2})日', '%m月%d日'),\n                (r'(\\d{1,2})月', '%m月'),\n                (r'(\\d{4})-(\\d{1,2})-(\\d{1,2})', '%Y-%m-%d'),\n                (r'(\\d{4})/(\\d{1,2})/(\\d{1,2})', '%Y/%m/%d'),\n                (r'(\\d{1,2})时', '%H时'),\n            ]\n            \n            time_items = []\n            non_time_items = []\n            \n            for idx, item in enumerate(axis_list):\n                item_str = str(item).strip()\n                data_val = data_list[idx] if idx < len(data_list) else 0\n                matched = False\n                \n                if item_str.isdigit():\n                    try:\n                        ts = int(item_str)\n                        if len(item_str) == 13:\n                            ts = ts // 1000\n                        dt = datetime.fromtimestamp(ts)\n                        if dt.minute == 0 and dt.second == 0:\n                            display_text = dt.strftime(\"%Y年%m月%d日\")\n                        else:\n                            display_text = dt.strftime(\"%Y年%m月%d日 %H:%M:%S\")\n                        time_items.append((dt, display_text, data_val))\n                        matched = True\n                        continue\n                    except:\n                        pass\n                \n                for pattern, fmt in time_patterns:\n                    match = re.match(pattern, item_str)\n                    if match:\n                        try:\n                            if fmt in ['%m月', '%m月%d日']:\n                                full_time_str = f\"2024年{item_str}\"\n                                dt = datetime.strptime(full_time_str, f'%Y年{fmt}')\n                                display_text = full_time_str\n                            else:\n                                dt = datetime.strptime(item_str, fmt)\n                                display_text = item_str\n                            time_items.append((dt, display_text, data_val))\n                            matched = True\n                            break\n                        except:\n                            continue\n                \n                if not matched:\n                    non_time_items.append((item_str, data_val))\n            \n            sorted_time_items = sorted(time_items, key=lambda x: x[0])\n            sorted_x = [item[1] for item in sorted_time_items]\n            sorted_data = [item[2] for item in sorted_time_items]\n            \n            non_time_x = [item[0] for item in non_time_items]\n            non_time_data = [item[1] for item in non_time_items]\n            \n            final_x = sorted_x + non_time_x\n            final_data = sorted_data + non_time_data\n            \n            return final_x, final_data\n        \n        sorted_x_axis, sorted_data = sort_and_convert_time_axis(x_axis, data_values)\n        \n        x_axis_str = \";\".join(sorted_x_axis)\n        data_str = \";\".join(map(str, sorted_data))\n        \n        result = {\n            \"chart_type\": chart_type,\n            \"title\": title,\n            \"x_axis\": x_axis_str,\n            \"data\": data_str,\n            \"categories\": x_axis_str\n        }\n        \n        return result\n        \n    except Exception as e:\n        default_result[\"title\"] = f\"数据处理异常: {str(e)[:50]}\"\n        return default_result"
+        code_language: python3
+        error_strategy: fail-branch
+        outputs:
+          categories:
+            children: null
+            type: string
+          chart_type:
+            children: null
+            type: string
+          data:
+            children: null
+            type: string
+          title:
+            children: null
+            type: string
+          x_axis:
+            children: null
+            type: string
+        selected: false
+        title: 数据提取&排序&时间戳转换
+        type: code
+        variables:
+        - value_selector:
+          - '1769770477716'
+          - structured_output
+          value_type: object
+          variable: structured_output
+      height: 88
+      id: '1770289276079'
+      position:
+        x: 3153.2216639928306
+        y: 560.8740958100043
+      positionAbsolute:
+        x: 3153.2216639928306
+        y: 560.8740958100043
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\nimport sys\n\ndef main(arg1=None, arg2=None):\n    status_code = arg1\n    response_body = arg2\n    table_ids = []\n    output_result = \"__NO_DATA__\"\n\n    try:\n        status_code_int = int(status_code) if status_code else None\n        if status_code_int == 200 and response_body:\n            body_json = json.loads(response_body)\n            \n            def extract_table_ids(data):\n                ids = []\n                if isinstance(data, dict):\n                    if \"table_id\" in data:\n                        table_id = data[\"table_id\"]\n                        if isinstance(table_id, str) and table_id.strip().isdigit():\n                            ids.append(int(table_id.strip()))\n                        elif isinstance(table_id, int):\n                            ids.append(table_id)\n                    for value in data.values():\n                        ids.extend(extract_table_ids(value))\n                elif isinstance(data, list):\n                    for item in data:\n                        ids.extend(extract_table_ids(item))\n                return ids\n            \n            table_ids = extract_table_ids(body_json)\n            table_ids = sorted(list(set(table_ids)))\n            \n            if table_ids:\n                output_result = table_ids\n\n    except:\n        pass\n\n    output = {\n        \"id\": output_result,\n        \"result\": output_result\n    }\n    return output"
+        code_language: python3
+        error_strategy: fail-branch
+        outputs:
+          id:
+            children: null
+            type: array[number]
+          result:
+            children: null
+            type: array[number]
+        selected: false
+        title: 表Id提取
+        type: code
+        variables:
+        - value_selector:
+          - '1769581080423'
+          - status_code
+          value_type: number
+          variable: arg1
+        - value_selector:
+          - '1769581080423'
+          - body
+          value_type: string
+          variable: arg2
+      height: 88
+      id: '1770289586784'
+      position:
+        x: 1748.8501062227065
+        y: -92.6849652511994
+      positionAbsolute:
+        x: 1748.8501062227065
+        y: -92.6849652511994
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory:
+          query_prompt_template: '{{#sys.query#}}
+
+            {{#sys.files#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 3
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: Qwen3-Next
+          provider: langgenuis/openai_api_compatible
+        prompt_template:
+        - id: 90a30a69-314c-4860-b3e6-27c1d532c34f
+          role: system
+          text: "你是数据分析场景的智能query重写助手，专门处理用户连续多轮提问，严格遵循以下规则：\n\n=== 核心规则（优先级从高到低） ===\n1.【上下文过滤原则】\n   - 只看【用户的历史提问{{#conversation.lastQuery#}}】，**完全忽略助手的所有回复内容**（表格、数据、图表、总结、echarts、解释等一律不看、不继承、不输出）。\n   - 你的任务**只重写用户当前的query**，不生成任何数据、图表、总结。\n2.【完整语义不修改原则】\n   - 只要当前提问语义完整，**所有词语一律原样保留**，**禁止删减、改写、简化任何内容**，包括场景词、指标域、分类词、位置词等，直接返回原问题。\n3.【完全新问题原则】\n   - 如果当前提问是全新的「主体+时间+指标/维度」组合（与上次无关联），直接返回原问题，不继承任何信息。\n4.【指代补全原则】\n   - 如果当前提问是指代性表述（如“XX的呢”“XX怎么样”“XX的相同维度”“11点呢”“昨天呢”等），仅补全「缺失的时间/指标/维度/对比对象」，保留当前明确指定的主体/时间/维度；\n   - 时间指代补全规则：\n     - “XX点呢”：替换上次时间的小时部分，保留日期和分钟/秒，生成精准时间点；\n     - “昨天呢”：基于系统当前时间{{#1772171506106.text#}}向前推1天作为日期；\n     - 仅指定日期（如2026-02-01）：不补全具体时分秒，将时间表述调整为「2026-02-01全天」，表示查询该日期一整天的数据。\n5.【禁止继承原则】\n   - 绝对禁止将上次提问的「主体」继承到当前提问（除非当前无任何主体），仅可继承「时间/指标/维度」。\n6.【场景词必须保留】\n   - “首页指标”“中控指标”“质量指标”“分厂指标”等**决定数据域/数据源的业务关键词，必须100%原样保留，禁止删除**。\n7.【输出规则】\n   - 只返回重写后的纯文本query，无任何多余解释、JSON、符号，保证语句通顺、符合自然问法。\n\n=== 上下文参考 ===\n上次用户提问：{{#conversation.lastQuery#}}\n当前用户提问：{{#sys.query#}}\n系统当前时间：{{#1772171506106.text#}}（格式：YYYY-MM-DD HH:MM:SS）\n\n=== 强制示例（必须对齐此逻辑） ===\n示例1（基础指代）：\n上次：统计郑童童最近一周的工时\n当前：葛东的呢\n重写后：统计葛东最近一周的工时\n\n示例2（完整信息不修改）：\n上次：近一个月华蓥工厂的指标数据\n当前：近一周宾州工厂的指标数据\n重写后：近一周宾州工厂的指标数据\n\n示例3（时间维度修改）：\n上次：统计郑童童最近一周的工时\n当前：他的本月工时呢\n重写后：统计郑童童本月的工时\n\n示例4（仅指定日期-全天数据）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n当前：查询华蓥工厂2026-02-01 ，1#回转窑状态\n重写后：查询华蓥工厂2026-02-01全天，1#回转窑状态\n\n示例5（小时指代补全）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n当前：11点呢\n重写后：查询华蓥工厂2026-02-01 11:00:00，1#回转窑状态\n\n示例6（相对时间补全-基于当前时间）：\n上次：查询华蓥工厂2026-02-01 12:00:00，1#回转窑状态\n系统当前时间：2026-02-26 10:00:00\n当前：昨天呢\n重写后：查询华蓥工厂2026-02-25全天，1#回转窑状态\n\n示例7（跨工厂对比补全）：\n上次：查询华蓥工厂近一月，水泥配料熟料强度预测合格率\n当前：与罗定工厂相比，哪个高\n重写后：查询华蓥工厂近一月水泥配料熟料强度预测合格率与罗定工厂相比哪个高\n\n示例8（完全新问题）：\n上次：查询华蓥工厂近一月，水泥配料熟料强度预测合格率\n当前：查询华蓥工厂2026-02-01，1#回转窑状态\n重写后：查询华蓥工厂2026-02-01全天，1#回转窑状态\n\n=== 执行要求 ===\n1. 严格按示例逻辑处理，优先使用系统当前时间计算“昨天”；\n2. 若系统当前时间未提供，默认按“自然日昨天”计算；\n3. 只输出最终重写后的query，无其他内容。"
+        selected: false
+        title: query重写
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1770805779308'
+      position:
+        x: 643.3074352987753
+        y: 33.7954938962032
+      positionAbsolute:
+        x: 643.3074352987753
+        y: 33.7954938962032
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: '%Y-%m-%d %H:%M:%S'
+          form: form
+          human_description:
+            en_US: Time format in strftime standard.
+            ja_JP: Time format in strftime standard.
+            pt_BR: Time format in strftime standard.
+            zh_Hans: strftime 标准的时间格式。
+          label:
+            en_US: Format
+            ja_JP: Format
+            pt_BR: Format
+            zh_Hans: 格式
+          llm_description: null
+          max: null
+          min: null
+          name: format
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: UTC
+          form: form
+          human_description:
+            en_US: Timezone
+            ja_JP: Timezone
+            pt_BR: Timezone
+            zh_Hans: 时区
+          label:
+            en_US: Timezone
+            ja_JP: Timezone
+            pt_BR: Timezone
+            zh_Hans: 时区
+          llm_description: null
+          max: null
+          min: null
+          name: timezone
+          options:
+          - icon: null
+            label:
+              en_US: UTC
+              ja_JP: UTC
+              pt_BR: UTC
+              zh_Hans: UTC
+            value: UTC
+          - icon: null
+            label:
+              en_US: Asia/Shanghai
+              ja_JP: Asia/Shanghai
+              pt_BR: Asia/Shanghai
+              zh_Hans: 亚洲/上海
+            value: Asia/Shanghai
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        params:
+          format: ''
+          timezone: ''
+        plugin_id: null
+        plugin_unique_identifier: ''
+        provider_icon: ''
+        provider_id: time
+        provider_name: 时间工具
+        provider_type: builtin
+        selected: false
+        title: 获取当前时间
+        tool_configurations:
+          format:
+            type: mixed
+            value: '%Y-%m-%d %H:%M:%S'
+          timezone:
+            type: constant
+            value: Asia/Shanghai
+        tool_description: 一个用于获取当前时间的工具。
+        tool_label: 获取当前时间
+        tool_name: current_time
+        tool_node_version: '2'
+        tool_parameters: {}
+        type: tool
+      height: 114
+      id: '1772171506106'
+      position:
+        x: 224.20329822267945
+        y: 33.7954938962032
+      positionAbsolute:
+        x: 224.20329822267945
+        y: 33.7954938962032
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        items:
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1770805779308'
+          - text
+          variable_selector:
+          - conversation
+          - lastQuery
+          write_mode: over-write
+        selected: false
+        title: "Query 重写后赋值\t"
+        type: assigner
+        version: '2'
+      height: 84
+      id: '17721771708300'
+      position:
+        x: 3510
+        y: -31.992463903209725
+      positionAbsolute:
+        x: 3510
+        y: -31.992463903209725
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "\nimport json\nfrom datetime import datetime, timezone, timedelta\n\ndef main(data_query_result: str):\n    def convert_timestamp(timestamp_ms):\n        try:\n            ts = float(timestamp_ms)\n            dt_utc = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)\n            dt_cst = dt_utc.astimezone(timezone(timedelta(hours=8)))\n            return dt_cst.strftime(\"%Y-%m-%d %H:%M:%S\")\n        except Exception:\n            return str(timestamp_ms)\n    \n    result = {\n        \"success\": False, \n        \"error\": \"输入为空\", \n        \"data\": {}\n    }\n\n    try:\n        if data_query_result is None:\n            pass\n        elif isinstance(data_query_result, str):\n            if not data_query_result.strip():\n                result[\"error\"] = \"输入字符串为空\"\n            else:\n                try:\n                    raw_data = json.loads(data_query_result)\n                    result = raw_data.copy() if isinstance(raw_data, dict) else {}\n                except json.JSONDecodeError:\n                    result[\"error\"] = \"JSON解析失败\"\n        elif isinstance(data_query_result, dict):\n            result = data_query_result.copy()\n        else:\n            result[\"error\"] = f\"类型错误: {type(data_query_result)}\"\n        \n        if isinstance(result, dict) and result.get(\"success\") and result.get(\"data\"):\n            data = result[\"data\"]\n            if \"状态记录时间\" in data and isinstance(data[\"状态记录时间\"], list):\n                data[\"状态记录时间\"] = [convert_timestamp(ts) for ts in data[\"状态记录时间\"]]\n            elif \"time\" in data and isinstance(data[\"time\"], list):\n                data[\"time\"] = [convert_timestamp(ts) for ts in data[\"time\"]]\n        \n        processed_data = json.dumps(result, ensure_ascii=False)\n        return {\n            \"processed_data\": processed_data\n        }\n\n    except Exception as e:\n        error_result = {\n            \"success\": False, \n            \"error\": str(e), \n            \"data\": {}\n        }\n        return {\n            \"processed_data\": json.dumps(error_result, ensure_ascii=False)\n        }"
+        code_language: python3
+        error_strategy: fail-branch
+        outputs:
+          processed_data:
+            children: null
+            type: string
+        selected: false
+        title: 数据预处理-时间转换
+        type: code
+        variables:
+        - value_selector:
+          - '1769497130423'
+          - text
+          value_type: string
+          variable: data_query_result
+      height: 88
+      id: '1772419999603'
+      position:
+        x: 2604.3277115539677
+        y: -64.7250870440458
+      positionAbsolute:
+        x: 2604.3277115539677
+        y: -64.7250870440458
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: -96.78158065801551
+      y: 237.79780872320987
+      zoom: 0.41055760864428786
+  rag_pipeline_variables: []
