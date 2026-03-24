@@ -1,399 +1,413 @@
-version: 0.5.0
-name: 智能问数Agent（优化版）
-description: 支持数据查询、图表生成、报告生成，可反问澄清、多轮对话及历史数据对比
-mode: workflow
-features:
-  file_upload:
-    allowed_file_uploads: false
-    allowed_file_extensions: []
-    allowed_file_upload_count: 3
-    allowed_file_size: 10
-    file_upload_method: disabled
-  opening_statement: ""
-  suggested_questions: []
-  speech_to_text:
-    enabled: false
-  text_to_speech:
-    enabled: false
-    voice: ""
-  interaction_mode: conversation
-  sensitive_word_avoidance:
-    enabled: false
-variables:
-  - id: intent
-    name: 用户意图
-    description: 用于路由分支，取值为data/chart/report/chart_from_history/report_from_history/compare
-    value: ""
-    value_type: string
-  - id: query_history_list
-    name: 历史查询结果列表
-    description: 存储每次查询的关键信息，用于后续生成图表、报告及对比分析，JSON数组格式
-    value: "[]"
-    value_type: string
-  - id: current_data_summary
-    name: 当前查询数据摘要
-    description: 本次查询数据的精简摘要，用于生成图表和报告，避免大模型超限
-    value: ""
-    value_type: string
-  - id: need_clarify
-    name: 是否需要反问澄清
-    description: 标记是否缺少关键查询参数，true需反问，false可直接执行
-    value: "false"
-    value_type: boolean
-  - id: clarify_question
-    name: 反问澄清话术
-    description: 缺少关键参数时，用于反问用户的话术，一次仅一个问题
-    value: ""
-    value_type: string
-  - id: target_history_indexes
-    name: 目标历史查询索引
-    description: 用于对比或基于历史生成图表/报告时，指定的历史查询序号数组
-    value: "[]"
-    value_type: string
-  - id: factory
-    name: 查询工厂
-    description: 用户查询的目标工厂名称
-    value: ""
-    value_type: string
-  - id: indicator
-    name: 查询指标
-    description: 用户查询的具体指标（如产量、强度、能耗等）
-    value: ""
-    value_type: string
-  - id: time_range
-    name: 时间范围
-    description: 用户查询的时间范围（如近7天、2026-03-18~2026-03-24）
-    value: ""
-    value_type: string
-nodes:
-  - id: start_node
-    type: start
-    next: intent_recognition
-  - id: intent_recognition
-    type: llm
-    name: 意图识别与参数校验
-    description: 识别用户意图，判断查询参数是否完整，输出结构化结果
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.2
-    prompt: |
-      你是智能问数助手的意图识别与参数校验专家。
-      输入：
-      - 用户当前问题：{{#sys.query#}}
-      - 历史对话：{{#conversation.memories#}}
-      - 历史查询列表：{{#conversation.query_history_list#}}
-      输出严格JSON，无其他内容，JSON字段说明如下：
-      {
-        "intent": "取值为data/chart/report/chart_from_history/report_from_history/compare",
-        "is_complete": true/false（参数是否完整）,
-        "clarify_question": "为空表示不用反问，否则为反问话术，一次仅一个问题",
-        "target_history_indexes": [序号数组，对比或基于历史时使用],
-        "factory": "工厂名称，无则为空",
-        "indicator": "查询指标，无则为空",
-        "time_range": "时间范围，无则为空"
-      }
-      识别规则：
-      1. intent取值规则：
-         - data：仅查询数据，不生成图表/报告
-         - chart：查询数据并生成图表
-         - report：查询数据并生成报告
-         - chart_from_history：仅用历史查询数据生成图表，不重新查数
-         - report_from_history：仅用历史查询数据生成报告，不重新查数
-         - compare：对比多段历史查询数据，生成对比报告
-      2. 必须反问的场景（is_complete=false）：
-         - 未说明工厂，且历史对话中无明确工厂信息
-         - 未说明时间范围，且历史对话中无明确时间范围
-         - 未说明指标，且历史对话中无明确指标
-         - 意图为compare，但未说清对比哪两次历史查询
-      3. clarify_question示例：
-         - "请问你想查询哪个工厂的数据？"
-         - "请问你想查看哪个时间段的数据？"
-         - "请问你具体想对比哪两次查询结果？"
-    output_mode: json
-    next: check_clarify
-  - id: check_clarify
-    type: condition
-    name: 校验是否需要反问
-    condition: "{{#conversation.need_clarify#}}"
-    true_branch: clarify_node
-    false_branch: intent_route
-  - id: clarify_node
-    type: reply
-    name: 反问澄清
-    description: 当参数不完整时，向用户反问，获取关键信息
-    content: "{{#conversation.clarify_question#}}"
-    next: end_node
-  - id: intent_route
-    type: condition
-    name: 意图路由分支
-    condition: "{{#conversation.intent#}}"
-    branches:
-      - value: "data"
-        next: data_query
-      - value: "chart"
-        next: data_query
-      - value: "report"
-        next: data_query
-      - value: "chart_from_history"
-        next: chart_from_history
-      - value: "report_from_history"
-        next: report_from_history
-      - value: "compare"
-        next: compare_report
-  - id: data_query
-    type: tool
-    name: 数据查询（Text2SQL）
-    description: 根据工厂、指标、时间范围，执行Text2SQL查询数据库
-    tool: sql_query
-    parameters:
-      sql: "SELECT * FROM 数据表 WHERE 工厂 = '{{#conversation.factory#}}' AND 指标 = '{{#conversation.indicator#}}' AND 时间 BETWEEN '{{#conversation.time_range.split('~')[0].trim()}}' AND '{{#conversation.time_range.split('~')[1].trim()}}'"
-    next: data_summary
-  - id: data_summary
-    type: llm
-    name: 数据摘要生成
-    description: 将查询到的数据生成精简摘要，存入历史查询列表
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.3
-    prompt: |
-      根据本次数据查询结果，生成一段精简的数据摘要，用于后续生成图表和报告。
-      要求：
-      1. 只保留关键信息：工厂、时间范围、指标、核心数值（均值、最大值、最小值）、趋势（平稳/上升/下降）、异常点（如有）
-      2. 语言简洁，不超过300字，无多余修饰
-      3. 格式清晰，便于后续提取信息
-      本次查询信息：
-      - 工厂：{{#conversation.factory#}}
-      - 时间范围：{{#conversation.time_range#}}
-      - 指标：{{#conversation.indicator#}}
-      - 数据结果：{{#data_query.result#}}
-    output_mode: text
-    next: update_history
-  - id: update_history
-    type: code
-    name: 更新历史查询列表
-    description: 将当前查询的摘要信息，追加到query_history_list数组中
-    language: python
-    code: |
-      import json
-      # 读取当前历史查询列表
-      history_list = json.loads("{{#conversation.query_history_list#}}")
-      # 生成新的历史记录（index为当前列表长度+1）
-      new_history = {
-          "index": len(history_list) + 1,
-          "factory": "{{#conversation.factory#}}",
-          "time": "{{#conversation.time_range#}}",
-          "indicator": "{{#conversation.indicator#}}",
-          "summary": "{{#data_summary.result#}}",
-          "raw_data": "{{#data_query.result#}}"
-      }
-      # 追加新记录并更新变量
-      history_list.append(new_history)
-      conversation.set("query_history_list", json.dumps(history_list))
-      conversation.set("current_data_summary", "{{#data_summary.result#}}")
-    next: intent_after_query
-  - id: intent_after_query
-    type: condition
-    name: 查询后意图分支
-    condition: "{{#conversation.intent#}}"
-    branches:
-      - value: "data"
-        next: data_reply
-      - value: "chart"
-        next: chart_generate
-      - value: "report"
-        next: report_generate
-  - id: data_reply
-    type: reply
-    name: 纯数据回复
-    description: 仅向用户展示查询到的原始数据及精简摘要
-    content: |
-      📊 数据查询结果
-      工厂：{{#conversation.factory#}}
-      时间范围：{{#conversation.time_range#}}
-      指标：{{#conversation.indicator#}}
-      核心摘要：{{#conversation.current_data_summary#}}
-      原始数据：{{#data_query.result#}}
-    next: end_node
-  - id: chart_generate
-    type: tool
-    name: 图表生成
-    description: 根据查询到的数据或历史数据，生成对应图表（折线/柱状/饼图）
-    tool: chart_generator
-    parameters:
-      data: "{{#data_query.result#}}"
-      factory: "{{#conversation.factory#}}"
-      indicator: "{{#conversation.indicator#}}"
-      time_range: "{{#conversation.time_range#}}"
-      chart_type: "auto"
-    next: chart_reply
-  - id: chart_reply
-    type: reply
-    name: 图表+数据回复
-    description: 向用户展示生成的图表及数据摘要
-    content: |
-      📈 图表生成完成
-      工厂：{{#conversation.factory#}}
-      时间范围：{{#conversation.time_range#}}
-      指标：{{#conversation.indicator#}}
-      核心摘要：{{#conversation.current_data_summary#}}
-      图表：{{#chart_generate.result#}}
-    next: end_node
-  - id: report_generate
-    type: llm
-    name: 报告生成（单指标）
-    description: 根据当前查询数据，生成Markdown格式的单指标报告
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.3
-    prompt: |
-      请根据以下数据信息，按照指定模板生成Markdown格式的单指标数据报告，要求内容完整、逻辑清晰，语言专业简洁。
-      报告模板：
-      # 数据查询报告
-      ## 基本信息
-      -  **查询工厂**：{{factory}}
-      -  **时间范围**：{{time_range}}
-      -  **指标类型**：{{indicator}}
-      
-      ## 核心数据概览
-      {{data_summary}}
-      
-      ## 趋势分析
-      结合数据趋势（平稳/上升/下降），简要分析变化原因（如无明确原因，可写“整体趋势平稳，无明显异常波动”）。
-      
-      ## 异常与结论
-      指出数据中的异常点（如有），并给出简要结论；无异常则写“数据无明显异常，整体符合预期”。
-      
-      需填充的信息：
-      - factory：{{#conversation.factory#}}
-      - time_range：{{#conversation.time_range#}}
-      - indicator：{{#conversation.indicator#}}
-      - data_summary：{{#conversation.current_data_summary#}}
-      - 数据详情：{{#data_query.result#}}
-    output_mode: markdown
-    next: report_reply
-  - id: report_reply
-    type: reply
-    name: 报告回复
-    description: 向用户展示生成的Markdown报告
-    content: "{{#report_generate.result#}}"
-    next: end_node
-  - id: chart_from_history
-    type: tool
-    name: 基于历史数据生成图表
-    description: 读取历史查询数据，生成对应图表，不重新查数
-    tool: chart_generator
-    parameters:
-      data: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].raw_data#}}"
-      factory: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}"
-      indicator: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}"
-      time_range: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}"
-      chart_type: "auto"
-    next: chart_history_reply
-  - id: chart_history_reply
-    type: reply
-    name: 历史数据图表回复
-    description: 向用户展示基于历史数据生成的图表及摘要
-    content: |
-      📈 基于历史数据生成图表完成
-      历史查询序号：{{#json.parse(conversation.target_history_indexes)[0]#}}
-      工厂：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
-      时间范围：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
-      指标：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
-      核心摘要：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
-      图表：{{#chart_from_history.result#}}
-    next: end_node
-  - id: report_from_history
-    type: llm
-    name: 基于历史数据生成报告
-    description: 读取历史查询数据，生成Markdown格式的单指标报告，不重新查数
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.3
-    prompt: |
-      请根据以下历史数据信息，按照指定模板生成Markdown格式的单指标数据报告，要求内容完整、逻辑清晰，语言专业简洁。
-      报告模板：
-      # 数据查询报告（基于历史数据）
-      ## 基本信息
-      -  **查询工厂**：{{factory}}
-      -  **时间范围**：{{time_range}}
-      -  **指标类型**：{{indicator}}
-      -  **历史查询序号**：{{history_index}}
-      
-      ## 核心数据概览
-      {{data_summary}}
-      
-      ## 趋势分析
-      结合数据趋势（平稳/上升/下降），简要分析变化原因（如无明确原因，可写“整体趋势平稳，无明显异常波动”）。
-      
-      ## 异常与结论
-      指出数据中的异常点（如有），并给出简要结论；无异常则写“数据无明显异常，整体符合预期”。
-      
-      需填充的信息：
-      - history_index：{{#json.parse(conversation.target_history_indexes)[0]#}}
-      - factory：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
-      - time_range：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
-      - indicator：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
-      - data_summary：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
-      - 数据详情：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].raw_data#}}
-    output_mode: markdown
-    next: report_history_reply
-  - id: report_history_reply
-    type: reply
-    name: 历史数据报告回复
-    description: 向用户展示基于历史数据生成的Markdown报告
-    content: "{{#report_from_history.result#}}"
-    next: end_node
-  - id: compare_report
-    type: llm
-    name: 多历史数据对比报告
-    description: 读取指定的多个历史查询数据，生成Markdown格式的对比报告
-    model:
-      provider: openai
-      model: gpt-3.5-turbo
-      temperature: 0.3
-    prompt: |
-      请根据以下多个历史查询数据，按照指定模板生成Markdown格式的多工厂对比报告，要求对比清晰、分析深入，语言专业简洁。
-      报告模板：
-      # 多工厂数据对比报告
-      ## 对比范围
-      {{compare_scope}}
-      
-      ## 核心指标对比
-      | 工厂 | 时间范围 | 核心指标 | 均值 | 趋势 | 异常点 |
-      |-----|----------|----------|------|------|--------|
-      | {{factory1}} | {{time1}} | {{indicator1}} | {{avg1}} | {{trend1}} | {{abnormal1}} |
-      | {{factory2}} | {{time2}} | {{indicator2}} | {{avg2}} | {{trend2}} | {{abnormal2}} |
-      
-      ## 差异分析
-      对比两个工厂的核心数据，分析差异原因（如无明确原因，可写“两工厂数据存在一定差异，主要表现为xxx，具体原因需结合实际业务进一步排查”）。
-      
-      ## 结论与建议
-      基于对比结果，给出简要结论和合理建议（如“建议重点关注xxx工厂的xxx指标，优化相关流程以缩小与xxx工厂的差距”）。
-      
-      需填充的信息（target_history_indexes为两个历史序号，如[1,2]）：
-      - 历史序号1：{{#json.parse(conversation.target_history_indexes)[0]#}}
-      - 工厂1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
-      - 时间1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
-      - 指标1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
-      - 摘要1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
-      - 历史序号2：{{#json.parse(conversation.target_history_indexes)[1]#}}
-      - 工厂2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].factory#}}
-      - 时间2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].time#}}
-      - 指标2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].indicator#}}
-      - 摘要2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].summary#}}
-      要求：从摘要中提取均值、趋势、异常点，填充到表格中；compare_scope需明确写出两个对比项的历史序号、工厂、时间、指标。
-    output_mode: markdown
-    next: compare_reply
-  - id: compare_reply
-    type: reply
-    name: 对比报告回复
-    description: 向用户展示多历史数据对比的Markdown报告
-    content: "{{#compare_report.result#}}"
-    next: end_node
-  - id: end_node
-    type: end
-    name: 流程结束
+app:
+  version: 0.5.0
+  name: 智能问数Agent
+  description: 支持数据查询、图表生成、报告生成
+  mode: workflow
+  icon:
+    type: emoji
+    content: 🤖
+  icon_background: "#FFE8E8"
+  created_at: 2026-01-01T00:00:00.000Z
+  updated_at: 2026-01-01T00:00:00.000Z
+  features:
+    opening_statement: ""
+    suggested_questions: []
+    user_input_form: []
+    file_upload:
+      enabled: false
+      allowed_file_types: []
+      allowed_file_extensions: []
+      allowed_file_upload_count: 3
+      allowed_file_size: 10
+      file_upload_method: local
+    speech_to_text:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      voice: ""
+    sensitive_word_avoidance:
+      enabled: false
+    interaction_mode: conversation
+    tool_prompt: ""
+workflow:
+  version: 1.0
+  name: 智能问数工作流
+  description: ""
+  variables:
+    - id: intent
+      name: 用户意图
+      description: 用于路由分支，取值为data/chart/report/chart_from_history/report_from_history/compare
+      value: ""
+      value_type: string
+    - id: query_history_list
+      name: 历史查询结果列表
+      description: 存储每次查询的关键信息，用于后续生成图表、报告及对比分析，JSON数组格式
+      value: "[]"
+      value_type: string
+    - id: current_data_summary
+      name: 当前查询数据摘要
+      description: 本次查询数据的精简摘要，用于生成图表和报告，避免大模型超限
+      value: ""
+      value_type: string
+    - id: need_clarify
+      name: 是否需要反问澄清
+      description: 标记是否缺少关键查询参数，true需反问，false可直接执行
+      value: "false"
+      value_type: boolean
+    - id: clarify_question
+      name: 反问澄清话术
+      description: 缺少关键参数时，用于反问用户的话术，一次仅一个问题
+      value: ""
+      value_type: string
+    - id: target_history_indexes
+      name: 目标历史查询索引
+      description: 用于对比或基于历史生成图表/报告时，指定的历史查询序号数组
+      value: "[]"
+      value_type: string
+    - id: factory
+      name: 查询工厂
+      description: 用户查询的目标工厂名称
+      value: ""
+      value_type: string
+    - id: indicator
+      name: 查询指标
+      description: 用户查询的具体指标（如产量、强度、能耗等）
+      value: ""
+      value_type: string
+    - id: time_range
+      name: 时间范围
+      description: 用户查询的时间范围（如近7天、2026-03-18~2026-03-24）
+      value: ""
+      value_type: string
+  nodes:
+    - id: start_node
+      type: start
+      next: intent_recognition
+    - id: intent_recognition
+      type: llm
+      name: 意图识别与参数校验
+      description: 识别用户意图，判断查询参数是否完整，输出结构化结果
+      model:
+        provider: openai
+        model: gpt-3.5-turbo
+        temperature: 0.2
+      prompt: |
+        你是智能问数助手的意图识别与参数校验专家。
+        输入：
+        - 用户当前问题：{{#sys.query#}}
+        - 历史对话：{{#conversation.memories#}}
+        - 历史查询列表：{{#conversation.query_history_list#}}
+        输出严格JSON，无其他内容，JSON字段说明如下：
+        {
+          "intent": "取值为data/chart/report/chart_from_history/report_from_history/compare",
+          "is_complete": true/false（参数是否完整）,
+          "clarify_question": "为空表示不用反问，否则为反问话术，一次仅一个问题",
+          "target_history_indexes": [序号数组，对比或基于历史时使用],
+          "factory": "工厂名称，无则为空",
+          "indicator": "查询指标，无则为空",
+          "time_range": "时间范围，无则为空"
+        }
+        识别规则：
+        1. intent取值规则：
+           - data：仅查询数据，不生成图表/报告
+           - chart：查询数据并生成图表
+           - report：查询数据并生成报告
+           - chart_from_history：仅用历史查询数据生成图表，不重新查数
+           - report_from_history：仅用历史查询数据生成报告，不重新查数
+           - compare：对比多段历史查询数据，生成对比报告
+        2. 必须反问的场景（is_complete=false）：
+           - 未说明工厂，且历史对话中无明确工厂信息
+           - 未说明时间范围，且历史对话中无明确时间范围
+           - 未说明指标，且历史对话中无明确指标
+           - 意图为compare，但未说清对比哪两次历史查询
+        3. clarify_question示例：
+           - "请问你想查询哪个工厂的数据？"
+           - "请问你想查看哪个时间段的数据？"
+           - "请问你具体想对比哪两次查询结果？"
+      output_mode: json
+      next: check_clarify
+    - id: check_clarify
+      type: condition
+      name: 校验是否需要反问
+      condition: "{{#conversation.need_clarify#}}"
+      true_branch: clarify_node
+      false_branch: intent_route
+    - id: clarify_node
+      type: reply
+      name: 反问澄清
+      description: 当参数不完整时，向用户反问，获取关键信息
+      content: "{{#conversation.clarify_question#}}"
+      next: end_node
+    - id: intent_route
+      type: condition
+      name: 意图路由分支
+      condition: "{{#conversation.intent#}}"
+      branches:
+        - value: "data"
+          next: data_query
+        - value: "chart"
+          next: data_query
+        - value: "report"
+          next: data_query
+        - value: "chart_from_history"
+          next: chart_from_history
+        - value: "report_from_history"
+          next: report_from_history
+        - value: "compare"
+          next: compare_report
+    - id: data_query
+      type: tool
+      name: 数据查询（Text2SQL）
+      description: 根据工厂、指标、时间范围，执行Text2SQL查询数据库
+      tool: sql_query
+      parameters:
+        sql: "SELECT * FROM 数据表 WHERE 工厂 = '{{#conversation.factory#}}' AND 指标 = '{{#conversation.indicator#}}' AND 时间 BETWEEN '{{#conversation.time_range.split('~')[0].trim()}}' AND '{{#conversation.time_range.split('~')[1].trim()}}'"
+      next: data_summary
+    - id: data_summary
+      type: llm
+      name: 数据摘要生成
+      description: 将查询到的数据生成精简摘要，存入历史查询列表
+      model:
+        provider: openai
+        model: gpt-3.5-turbo
+        temperature: 0.3
+      prompt: |
+        根据本次数据查询结果，生成一段精简的数据摘要，用于后续生成图表和报告。
+        要求：
+        1. 只保留关键信息：工厂、时间范围、指标、核心数值（均值、最大值、最小值）、趋势（平稳/上升/下降）、异常点（如有）
+        2. 语言简洁，不超过300字，无多余修饰
+        3. 格式清晰，便于后续提取信息
+        本次查询信息：
+        - 工厂：{{#conversation.factory#}}
+        - 时间范围：{{#conversation.time_range#}}
+        - 指标：{{#conversation.indicator#}}
+        - 数据结果：{{#data_query.result#}}
+      output_mode: text
+      next: update_history
+    - id: update_history
+      type: code
+      name: 更新历史查询列表
+      description: 将当前查询的摘要信息，追加到query_history_list数组中
+      language: python
+      code: |
+        import json
+        # 读取当前历史查询列表
+        history_list = json.loads("{{#conversation.query_history_list#}}")
+        # 生成新的历史记录（index为当前列表长度+1）
+        new_history = {
+            "index": len(history_list) + 1,
+            "factory": "{{#conversation.factory#}}",
+            "time": "{{#conversation.time_range#}}",
+            "indicator": "{{#conversation.indicator#}}",
+            "summary": "{{#data_summary.result#}}",
+            "raw_data": "{{#data_query.result#}}"
+        }
+        # 追加新记录并更新变量
+        history_list.append(new_history)
+        conversation.set("query_history_list", json.dumps(history_list))
+        conversation.set("current_data_summary", "{{#data_summary.result#}}")
+      next: intent_after_query
+    - id: intent_after_query
+      type: condition
+      name: 查询后意图分支
+      condition: "{{#conversation.intent#}}"
+      branches:
+        - value: "data"
+          next: data_reply
+        - value: "chart"
+          next: chart_generate
+        - value: "report"
+          next: report_generate
+    - id: data_reply
+      type: reply
+      name: 纯数据回复
+      description: 仅向用户展示查询到的原始数据及精简摘要
+      content: |
+        📊 数据查询结果
+        工厂：{{#conversation.factory#}}
+        时间范围：{{#conversation.time_range#}}
+        指标：{{#conversation.indicator#}}
+        核心摘要：{{#conversation.current_data_summary#}}
+        原始数据：{{#data_query.result#}}
+      next: end_node
+    - id: chart_generate
+      type: tool
+      name: 图表生成
+      description: 根据查询到的数据或历史数据，生成对应图表（折线/柱状/饼图）
+      tool: chart_generator
+      parameters:
+        data: "{{#data_query.result#}}"
+        factory: "{{#conversation.factory#}}"
+        indicator: "{{#conversation.indicator#}}"
+        time_range: "{{#conversation.time_range#}}"
+        chart_type: "auto"
+      next: chart_reply
+    - id: chart_reply
+      type: reply
+      name: 图表+数据回复
+      description: 向用户展示生成的图表及数据摘要
+      content: |
+        📈 图表生成完成
+        工厂：{{#conversation.factory#}}
+        时间范围：{{#conversation.time_range#}}
+        指标：{{#conversation.indicator#}}
+        核心摘要：{{#conversation.current_data_summary#}}
+        图表：{{#chart_generate.result#}}
+      next: end_node
+    - id: report_generate
+      type: llm
+      name: 报告生成（单指标）
+      description: 根据当前查询数据，生成Markdown格式的单指标报告
+      model:
+        provider: openai
+        model: gpt-3.5-turbo
+        temperature: 0.3
+      prompt: |
+        请根据以下数据信息，按照指定模板生成Markdown格式的单指标数据报告，要求内容完整、逻辑清晰，语言专业简洁。
+        报告模板：
+        # 数据查询报告
+        ## 基本信息
+        -  **查询工厂**：{{factory}}
+        -  **时间范围**：{{time_range}}
+        -  **指标类型**：{{indicator}}
+        
+        ## 核心数据概览
+        {{data_summary}}
+        
+        ## 趋势分析
+        结合数据趋势（平稳/上升/下降），简要分析变化原因（如无明确原因，可写“整体趋势平稳，无明显异常波动”）。
+        
+        ## 异常与结论
+        指出数据中的异常点（如有），并给出简要结论；无异常则写“数据无明显异常，整体符合预期”。
+        
+        需填充的信息：
+        - factory：{{#conversation.factory#}}
+        - time_range：{{#conversation.time_range#}}
+        - indicator：{{#conversation.indicator#}}
+        - data_summary：{{#conversation.current_data_summary#}}
+        - 数据详情：{{#data_query.result#}}
+      output_mode: markdown
+      next: report_reply
+    - id: report_reply
+      type: reply
+      name: 报告回复
+      description: 向用户展示生成的Markdown报告
+      content: "{{#report_generate.result#}}"
+      next: end_node
+    - id: chart_from_history
+      type: tool
+      name: 基于历史数据生成图表
+      description: 读取历史查询数据，生成对应图表，不重新查数
+      tool: chart_generator
+      parameters:
+        data: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].raw_data#}}"
+        factory: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}"
+        indicator: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}"
+        time_range: "{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}"
+        chart_type: "auto"
+      next: chart_history_reply
+    - id: chart_history_reply
+      type: reply
+      name: 历史数据图表回复
+      description: 向用户展示基于历史数据生成的图表及摘要
+      content: |
+        📈 基于历史数据生成图表完成
+        历史查询序号：{{#json.parse(conversation.target_history_indexes)[0]#}}
+        工厂：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
+        时间范围：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
+        指标：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
+        核心摘要：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
+        图表：{{#chart_from_history.result#}}
+      next: end_node
+    - id: report_from_history
+      type: llm
+      name: 基于历史数据生成报告
+      description: 读取历史查询数据，生成Markdown格式的单指标报告，不重新查数
+      model:
+        provider: openai
+        model: gpt-3.5-turbo
+        temperature: 0.3
+      prompt: |
+        请根据以下历史数据信息，按照指定模板生成Markdown格式的单指标数据报告，要求内容完整、逻辑清晰，语言专业简洁。
+        报告模板：
+        # 数据查询报告（基于历史数据）
+        ## 基本信息
+        -  **查询工厂**：{{factory}}
+        -  **时间范围**：{{time_range}}
+        -  **指标类型**：{{indicator}}
+        -  **历史查询序号**：{{history_index}}
+        
+        ## 核心数据概览
+        {{data_summary}}
+        
+        ## 趋势分析
+        结合数据趋势（平稳/上升/下降），简要分析变化原因（如无明确原因，可写“整体趋势平稳，无明显异常波动”）。
+        
+        ## 异常与结论
+        指出数据中的异常点（如有），并给出简要结论；无异常则写“数据无明显异常，整体符合预期”。
+        
+        需填充的信息：
+        - history_index：{{#json.parse(conversation.target_history_indexes)[0]#}}
+        - factory：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
+        - time_range：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
+        - indicator：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
+        - data_summary：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
+        - 数据详情：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].raw_data#}}
+      output_mode: markdown
+      next: report_history_reply
+    - id: report_history_reply
+      type: reply
+      name: 历史数据报告回复
+      description: 向用户展示基于历史数据生成的Markdown报告
+      content: "{{#report_from_history.result#}}"
+      next: end_node
+    - id: compare_report
+      type: llm
+      name: 多历史数据对比报告
+      description: 读取指定的多个历史查询数据，生成Markdown格式的对比报告
+      model:
+        provider: openai
+        model: gpt-3.5-turbo
+        temperature: 0.3
+      prompt: |
+        请根据以下多个历史查询数据，按照指定模板生成Markdown格式的多工厂对比报告，要求对比清晰、分析深入，语言专业简洁。
+        报告模板：
+        # 多工厂数据对比报告
+        ## 对比范围
+        {{compare_scope}}
+        
+        ## 核心指标对比
+        | 工厂 | 时间范围 | 核心指标 | 均值 | 趋势 | 异常点 |
+        |-----|----------|----------|------|------|--------|
+        | {{factory1}} | {{time1}} | {{indicator1}} | {{avg1}} | {{trend1}} | {{abnormal1}} |
+        | {{factory2}} | {{time2}} | {{indicator2}} | {{avg2}} | {{trend2}} | {{abnormal2}} |
+        
+        ## 差异分析
+        对比两个工厂的核心数据，分析差异原因（如无明确原因，可写“两工厂数据存在一定差异，主要表现为xxx，具体原因需结合实际业务进一步排查”）。
+        
+        ## 结论与建议
+        基于对比结果，给出简要结论和合理建议（如“建议重点关注xxx工厂的xxx指标，优化相关流程以缩小与xxx工厂的差距”）。
+        
+        需填充的信息（target_history_indexes为两个历史序号，如[1,2]）：
+        - 历史序号1：{{#json.parse(conversation.target_history_indexes)[0]#}}
+        - 工厂1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].factory#}}
+        - 时间1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].time#}}
+        - 指标1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].indicator#}}
+        - 摘要1：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[0]-1].summary#}}
+        - 历史序号2：{{#json.parse(conversation.target_history_indexes)[1]#}}
+        - 工厂2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].factory#}}
+        - 时间2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].time#}}
+        - 指标2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].indicator#}}
+        - 摘要2：{{#json.parse(conversation.query_history_list)[json.parse(conversation.target_history_indexes)[1]-1].summary#}}
+        要求：从摘要中提取均值、趋势、异常点，填充到表格中；compare_scope需明确写出两个对比项的历史序号、工厂、时间、指标。
+      output_mode: markdown
+      next: compare_reply
+    - id: compare_reply
+      type: reply
+      name: 对比报告回复
+      description: 向用户展示多历史数据对比的Markdown报告
+      content: "{{#compare_report.result#}}"
+      next: end_node
+    - id: end_node
+      type: end
+      name: 流程结束
