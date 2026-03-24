@@ -795,7 +795,7 @@ workflow:
             value: "{\n\t\"vector\": \"{{#1770805779308.text#}}\",\n\t\"param\": {\n\t\t\"entity_des\": \"{{#llm.structured_output.dataDomain#}}\",\n\t\t\"tags\": \"{{#llm.structured_output.factory#}}\",\n\t\t\"factory\": \"{{#llm.structured_output.factory#}}\"\n\t},\n\t\"pageSize\": 5\n}"
           type: json
         error_strategy: fail-branch
-        headers: Authorization: {{#1769496563446.authorization#}}
+        headers: Authorization: ''
         method: post
         params: ''
         retry_config:
