@@ -1,0 +1,40 @@
+# 谷歌Gemini模型
+GOOGLE_API_KEY=xxx
+DEEPSEEK_API_KEY=xxx
+ALI_API_KEY=sk-xxx
+OPENAI_API_KEY=xxx
+CLAUDE_API_KEY=xxx
+# 使用LLM的流式的响应，测试gemini的效果很好，true表示开启流的请求和响应
+STREAMING=true
+# 使用哪个模型供应商, ollama, 或者vllm，需要提供OLLAMA_API_URL， VLLM_API_URL
+#MODEL_PROVIDER=google
+# 使用哪个模型
+#LLM_MODEL=gemini-2.0-flash
+
+MODEL_PROVIDER=deepseek
+LLM_MODEL=deepseek-chat
+# 是否使用代理，clash的代理7890
+# HTTP_PROXY=http://127.0.0.1:7890
+# HTTPS_PROXY=http://127.0.0.1:7890
+
+# RAG 知识库配置
+# RAG API 地址
+RAG_API_URL=https://cic.mdiri.com/llm-knowledge-microservice/api/v1
+# RAG API Token (Bearer Token)
+RAG_API_TOKEN=your_rag_token_here
+# RAG 请求超时时间（秒）
+RAG_TIMEOUT=30
+
+# DocumentSearch 工具配置
+# 是否启用搜狗微信搜索工具 (true/false)
+ENABLE_DOCUMENT_SEARCH=false
+
+# LiteLLM 配置
+# 是否开启 LiteLLM 的 debug 模式，默认关闭
+# 设置为 true 时会输出详细的调试日志
+LITELLM_DEBUG=false
+
+# 是否启用 LiteLLM 的计费功能，默认关闭
+# 关闭后可以避免 "This model isn't mapped yet" 的错误信息
+# 如果需要使用计费功能，设置为 true
+LITELLM_BILLING_ENABLED=false
