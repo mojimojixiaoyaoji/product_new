@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:20px;padding:0;background:white">
+<svg width="800" viewBox="0 0 680 700" xmlns="http://www.w3.org/2000/svg" style="font-family:Arial,sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect width="680" height="700" fill="white"/>
+<text font-size="14" font-weight="bold" x="340" y="24" text-anchor="middle" fill="#1F4E79">知识图谱构建与数据集生产模块架构</text>
+
+<!-- 输入 -->
+<rect x="190" y="38" width="300" height="34" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text font-size="12" font-weight="bold" x="340" y="59" text-anchor="middle" dominant-baseline="central" fill="#085041">清洗标注后的高质量语料</text>
+<line x1="260" y1="72" x2="130" y2="92" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="420" y1="72" x2="550" y2="92" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+
+<!-- 知识图谱构建 -->
+<rect x="30" y="92" width="210" height="160" rx="10" fill="none" stroke="#B4B2A9" stroke-width="0.8" stroke-dasharray="5 4"/>
+<text font-size="10" x="50" y="110" fill="#888780">知识图谱构建</text>
+<rect x="44" y="118" width="88" height="42" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="88" y="134" text-anchor="middle" dominant-baseline="central" fill="#3C3489">知识抽取</text>
+<text font-size="10" x="88" y="150" text-anchor="middle" dominant-baseline="central" fill="#534AB7">实体·属性·关系</text>
+<line x1="132" y1="139" x2="148" y2="139" stroke="#185FA5" stroke-width="1.2" marker-end="url(#ar)"/>
+<rect x="148" y="118" width="82" height="42" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="189" y="134" text-anchor="middle" dominant-baseline="central" fill="#3C3489">知识融合</text>
+<text font-size="10" x="189" y="150" text-anchor="middle" dominant-baseline="central" fill="#534AB7">对齐·消歧</text>
+<rect x="44" y="172" width="186" height="68" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text font-size="11" font-weight="bold" x="137" y="190" text-anchor="middle" dominant-baseline="central" fill="#3C3489">行业知识图谱</text>
+<text font-size="10" x="137" y="207" text-anchor="middle" dominant-baseline="central" fill="#534AB7">原材料·工艺·标准</text>
+<text font-size="10" x="137" y="222" text-anchor="middle" dominant-baseline="central" fill="#534AB7">产品·检测·应用场景等</text>
+<line x1="137" y1="252" x2="137" y2="274" stroke="#888780" stroke-width="0.8"/>
+<line x1="137" y1="274" x2="340" y2="274" stroke="#888780" stroke-width="0.8"/>
+<line x1="340" y1="274" x2="340" y2="292" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+
+<!-- 数据集生产工具链 -->
+<rect x="440" y="92" width="210" height="160" rx="10" fill="none" stroke="#B4B2A9" stroke-width="0.8" stroke-dasharray="5 4"/>
+<text font-size="10" x="460" y="110" fill="#888780">数据集生产工具链</text>
+<rect x="454" y="118" width="92" height="42" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="500" y="134" text-anchor="middle" dominant-baseline="central" fill="#0C447C">CoT生成</text>
+<text font-size="10" x="500" y="150" text-anchor="middle" dominant-baseline="central" fill="#185FA5">思维链·推理</text>
+<rect x="556" y="118" width="84" height="42" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="598" y="134" text-anchor="middle" dominant-baseline="central" fill="#0C447C">长上下文</text>
+<text font-size="10" x="598" y="150" text-anchor="middle" dominant-baseline="central" fill="#185FA5">摘要·多跳</text>
+<rect x="454" y="172" width="92" height="42" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="500" y="188" text-anchor="middle" dominant-baseline="central" fill="#0C447C">多轮对话</text>
+<text font-size="10" x="500" y="204" text-anchor="middle" dominant-baseline="central" fill="#185FA5">对话树·扩增</text>
+<rect x="556" y="172" width="84" height="42" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="598" y="188" text-anchor="middle" dominant-baseline="central" fill="#0C447C">偏好数据</text>
+<text font-size="10" x="598" y="204" text-anchor="middle" dominant-baseline="central" fill="#185FA5">RLHF·DPO</text>
+<line x1="543" y1="252" x2="543" y2="274" stroke="#888780" stroke-width="0.8"/>
+<line x1="340" y1="274" x2="543" y2="274" stroke="#888780" stroke-width="0.8"/>
+
+<!-- 业务维度：6类+等 -->
+<text font-size="10" x="340" y="308" text-anchor="middle" fill="#888780">业务维度（数据集类型）</text>
+<rect x="30" y="316" width="183" height="34" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="121" y="337" text-anchor="middle" dominant-baseline="central" fill="#633806">全景知识数据集</text>
+<rect x="225" y="316" width="183" height="34" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="316" y="337" text-anchor="middle" dominant-baseline="central" fill="#633806">全生命周期生产制造数据集</text>
+<rect x="420" y="316" width="183" height="34" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="511" y="337" text-anchor="middle" dominant-baseline="central" fill="#633806">产品研发创新数据集</text>
+<rect x="30" y="362" width="183" height="34" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="121" y="383" text-anchor="middle" dominant-baseline="central" fill="#633806">安全生产与碳足迹数据集</text>
+<rect x="225" y="362" width="183" height="34" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="316" y="383" text-anchor="middle" dominant-baseline="central" fill="#633806">智慧运营与决策优化数据集</text>
+<rect x="420" y="362" width="183" height="34" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="511" y="383" text-anchor="middle" dominant-baseline="central" fill="#633806">韧性供应链协同数据集</text>
+<text font-size="12" font-weight="bold" x="625" y="353" fill="#854F0B">等</text>
+
+<!-- 汇聚线 -->
+<line x1="121" y1="396" x2="121" y2="418" stroke="#888780" stroke-width="0.8"/>
+<line x1="316" y1="396" x2="316" y2="418" stroke="#888780" stroke-width="0.8"/>
+<line x1="511" y1="396" x2="511" y2="418" stroke="#888780" stroke-width="0.8"/>
+<line x1="121" y1="418" x2="511" y2="418" stroke="#888780" stroke-width="0.8"/>
+<line x1="316" y1="418" x2="316" y2="436" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+
+<!-- 技术维度：4种+等 -->
+<text font-size="10" x="316" y="452" text-anchor="middle" fill="#888780">技术维度（数据集形态）</text>
+<rect x="30" y="460" width="136" height="50" rx="7" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="98" y="478" text-anchor="middle" dominant-baseline="central" fill="#712B13">预训练数据集</text>
+<text font-size="10" x="98" y="496" text-anchor="middle" dominant-baseline="central" fill="#993C1D">≥1000亿Token</text>
+<rect x="178" y="460" width="136" height="50" rx="7" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="246" y="478" text-anchor="middle" dominant-baseline="central" fill="#712B13">指令微调数据集</text>
+<text font-size="10" x="246" y="496" text-anchor="middle" dominant-baseline="central" fill="#993C1D">≥150万条</text>
+<rect x="326" y="460" width="148" height="50" rx="7" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="400" y="478" text-anchor="middle" dominant-baseline="central" fill="#712B13">强化学习偏好数据</text>
+<text font-size="10" x="400" y="496" text-anchor="middle" dominant-baseline="central" fill="#993C1D">≥10万组</text>
+<rect x="486" y="460" width="136" height="50" rx="7" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="554" y="478" text-anchor="middle" dominant-baseline="central" fill="#712B13">基准测试数据集</text>
+<text font-size="10" x="554" y="496" text-anchor="middle" dominant-baseline="central" fill="#993C1D">≥1.5万条</text>
+<text font-size="12" font-weight="bold" x="638" y="490" fill="#993C1D">等</text>
+
+<!-- 版本管理 & 评估 -->
+<line x1="98" y1="510" x2="98" y2="532" stroke="#888780" stroke-width="0.8"/>
+<line x1="400" y1="510" x2="400" y2="532" stroke="#888780" stroke-width="0.8"/>
+<line x1="98" y1="532" x2="554" y2="532" stroke="#888780" stroke-width="0.8"/>
+<line x1="200" y1="532" x2="200" y2="548" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="460" y1="532" x2="460" y2="548" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<rect x="30" y="548" width="340" height="38" rx="7" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="200" y="564" text-anchor="middle" dominant-baseline="central" fill="#444441">数据集版本管理</text>
+<text font-size="10" x="200" y="578" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">版本对比 · 回滚 · 统计分析</text>
+<rect x="390" y="548" width="250" height="38" rx="7" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="515" y="564" text-anchor="middle" dominant-baseline="central" fill="#27500A">基准测试评估工具</text>
+<text font-size="10" x="515" y="578" text-anchor="middle" dominant-baseline="central" fill="#3B6D11">行业评测 · 自动评分 · 效果闭环</text>
+
+<!-- 底注 -->
+<text font-size="10" x="340" y="618" text-anchor="middle" fill="#888780">多模态占比 ≥40% · 近3年时效性数据 ≥40% · ≥2种模态 · 支撑 ≥15个细分任务场景</text>
+</svg>
+</body>
+</html>

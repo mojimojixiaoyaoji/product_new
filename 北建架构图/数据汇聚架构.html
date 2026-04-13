@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:20px;padding:0;background:white">
+<svg width="800" viewBox="0 0 680 490" xmlns="http://www.w3.org/2000/svg" style="font-family:Arial,sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect width="680" height="490" fill="white"/>
+<text font-size="14" font-weight="bold" x="340" y="26" text-anchor="middle" fill="#1F4E79">数据汇聚功能模块架构</text>
+<!-- 外部机构列 -->
+<rect x="20" y="44" width="120" height="384" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text font-size="12" font-weight="bold" x="80" y="68" text-anchor="middle" fill="#085041">外部机构</text>
+<text font-size="10" x="80" y="86" text-anchor="middle" fill="#085041">（≥10家）</text>
+<rect x="30" y="96" width="100" height="28" rx="5" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="80" y="114" text-anchor="middle" dominant-baseline="central" fill="#04342C">科研院所</text>
+<rect x="30" y="132" width="100" height="28" rx="5" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="80" y="150" text-anchor="middle" dominant-baseline="central" fill="#04342C">行业协会</text>
+<rect x="30" y="168" width="100" height="28" rx="5" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="80" y="186" text-anchor="middle" dominant-baseline="central" fill="#04342C">上下游企业</text>
+<rect x="30" y="204" width="100" height="28" rx="5" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="80" y="222" text-anchor="middle" dominant-baseline="central" fill="#04342C">检测机构</text>
+<rect x="30" y="240" width="100" height="28" rx="5" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="80" y="258" text-anchor="middle" dominant-baseline="central" fill="#04342C">标准制定机构</text>
+<rect x="30" y="276" width="100" height="28" rx="5" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="80" y="294" text-anchor="middle" dominant-baseline="central" fill="#04342C">高校等</text>
+<!-- 汇聚箭头 -->
+<line x1="140" y1="110" x2="198" y2="185" stroke="#185FA5" stroke-width="1" marker-end="url(#ar)"/>
+<line x1="140" y1="146" x2="198" y2="200" stroke="#185FA5" stroke-width="1" marker-end="url(#ar)"/>
+<line x1="140" y1="182" x2="198" y2="215" stroke="#185FA5" stroke-width="1" marker-end="url(#ar)"/>
+<line x1="140" y1="218" x2="198" y2="225" stroke="#185FA5" stroke-width="1" marker-end="url(#ar)"/>
+<line x1="140" y1="254" x2="198" y2="238" stroke="#185FA5" stroke-width="1" marker-end="url(#ar)"/>
+<line x1="140" y1="290" x2="198" y2="250" stroke="#185FA5" stroke-width="1" marker-end="url(#ar)"/>
+<!-- 协同汇聚控制台 -->
+<rect x="198" y="44" width="182" height="384" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.8"/>
+<text font-size="12" font-weight="bold" x="289" y="70" text-anchor="middle" fill="#0C447C">协同汇聚控制台</text>
+<rect x="210" y="84" width="158" height="40" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="289" y="100" text-anchor="middle" dominant-baseline="central" fill="#042C53">数据授权管理中心</text>
+<text font-size="10" x="289" y="116" text-anchor="middle" dominant-baseline="central" fill="#042C53">权属·使用范围·安全责任</text>
+<rect x="210" y="134" width="158" height="40" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="289" y="150" text-anchor="middle" dominant-baseline="central" fill="#042C53">联盟数据共享协议</text>
+<text font-size="10" x="289" y="166" text-anchor="middle" dominant-baseline="central" fill="#042C53">标准化合作框架</text>
+<rect x="210" y="184" width="158" height="40" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="289" y="200" text-anchor="middle" dominant-baseline="central" fill="#042C53">跨机构数据通道</text>
+<text font-size="10" x="289" y="216" text-anchor="middle" dominant-baseline="central" fill="#042C53">SFTP+TLS加密</text>
+<rect x="210" y="234" width="158" height="40" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="289" y="250" text-anchor="middle" dominant-baseline="central" fill="#042C53">汇聚策略管理</text>
+<text font-size="10" x="289" y="266" text-anchor="middle" dominant-baseline="central" fill="#042C53">全量/增量/实时/定时</text>
+<rect x="210" y="284" width="158" height="40" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="289" y="300" text-anchor="middle" dominant-baseline="central" fill="#042C53">汇聚监控台</text>
+<text font-size="10" x="289" y="316" text-anchor="middle" dominant-baseline="central" fill="#042C53">状态·质量·告警</text>
+<rect x="210" y="334" width="158" height="40" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="289" y="350" text-anchor="middle" dominant-baseline="central" fill="#042C53">数据接入适配层</text>
+<text font-size="10" x="289" y="366" text-anchor="middle" dominant-baseline="central" fill="#042C53">达梦·MySQL·Kafka等</text>
+<line x1="380" y1="236" x2="418" y2="236" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<!-- 湖仓数据分类 -->
+<rect x="418" y="44" width="232" height="384" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text font-size="12" font-weight="bold" x="534" y="68" text-anchor="middle" fill="#3C3489">湖仓一体·数据分类</text>
+<rect x="430" y="84" width="208" height="44" rx="6" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="10" x="534" y="100" text-anchor="middle" dominant-baseline="central" fill="#26215C">全景知识数据集</text>
+<text font-size="10" x="534" y="116" text-anchor="middle" dominant-baseline="central" fill="#26215C">行业标准·专利·知识图谱</text>
+<rect x="430" y="138" width="208" height="44" rx="6" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="10" x="534" y="154" text-anchor="middle" dominant-baseline="central" fill="#26215C">全生命周期生产制造数据集</text>
+<text font-size="10" x="534" y="170" text-anchor="middle" dominant-baseline="central" fill="#26215C">工艺·设备·质检等</text>
+<rect x="430" y="192" width="208" height="44" rx="6" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="10" x="534" y="208" text-anchor="middle" dominant-baseline="central" fill="#26215C">产品研发创新数据集</text>
+<text font-size="10" x="534" y="224" text-anchor="middle" dominant-baseline="central" fill="#26215C">配方·仿真·性能测试等</text>
+<rect x="430" y="246" width="208" height="44" rx="6" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="10" x="534" y="262" text-anchor="middle" dominant-baseline="central" fill="#26215C">安全生产与碳足迹数据集</text>
+<text font-size="10" x="534" y="278" text-anchor="middle" dominant-baseline="central" fill="#26215C">安全巡检·碳排放监测等</text>
+<rect x="430" y="300" width="208" height="44" rx="6" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="10" x="534" y="316" text-anchor="middle" dominant-baseline="central" fill="#26215C">智慧运营与决策优化数据集</text>
+<text font-size="10" x="534" y="332" text-anchor="middle" dominant-baseline="central" fill="#26215C">ERP·定价·采购策略等</text>
+<rect x="430" y="354" width="208" height="44" rx="6" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="10" x="534" y="370" text-anchor="middle" dominant-baseline="central" fill="#26215C">韧性供应链协同数据集</text>
+<text font-size="10" x="534" y="386" text-anchor="middle" dominant-baseline="central" fill="#26215C">物流·库存·原材料价格等</text>
+<!-- 底部注释 -->
+<text font-size="10" x="340" y="450" text-anchor="middle" fill="#5F5E5A">内部数据源（生产制造·研发创新·安全环保·经营管理·供应链等各域）同步经协同控制台汇入</text>
+<text font-size="10" x="340" y="468" text-anchor="middle" fill="#888780">多模态数据条数占比 ≥40% · 近3年时效性数据占比 ≥40%（汇聚阶段统计监控）</text>
+</svg>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:20px;padding:0;background:white">
+<svg width="800" viewBox="0 0 680 510" xmlns="http://www.w3.org/2000/svg" style="font-family:Arial,sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect width="680" height="510" fill="white"/>
+<text font-size="14" font-weight="bold" x="340" y="26" text-anchor="middle" fill="#1F4E79">数据采集功能模块架构</text>
+<!-- 数据源 -->
+<text font-size="11" x="30" y="60" dominant-baseline="central" fill="#5F5E5A">数据源</text>
+<rect x="76" y="44" width="96" height="40" rx="6" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="124" y="58" text-anchor="middle" dominant-baseline="central" fill="#04342C">生产设备</text>
+<text font-size="10" x="124" y="72" text-anchor="middle" dominant-baseline="central" fill="#04342C">传感器/MES</text>
+<rect x="184" y="44" width="96" height="40" rx="6" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="232" y="58" text-anchor="middle" dominant-baseline="central" fill="#04342C">业务系统</text>
+<text font-size="10" x="232" y="72" text-anchor="middle" dominant-baseline="central" fill="#04342C">ERP/SCADA</text>
+<rect x="292" y="44" width="96" height="40" rx="6" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="340" y="58" text-anchor="middle" dominant-baseline="central" fill="#04342C">行业文档</text>
+<text font-size="10" x="340" y="72" text-anchor="middle" dominant-baseline="central" fill="#04342C">标准/专利/报告</text>
+<rect x="400" y="44" width="96" height="40" rx="6" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="448" y="58" text-anchor="middle" dominant-baseline="central" fill="#04342C">外部合作</text>
+<text font-size="10" x="448" y="72" text-anchor="middle" dominant-baseline="central" fill="#04342C">机构数据</text>
+<rect x="508" y="44" width="96" height="40" rx="6" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text font-size="10" x="556" y="58" text-anchor="middle" dominant-baseline="central" fill="#04342C">互联网</text>
+<text font-size="10" x="556" y="72" text-anchor="middle" dominant-baseline="central" fill="#04342C">公开数据</text>
+<line x1="124" y1="84" x2="124" y2="106" stroke="#185FA5" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="232" y1="84" x2="232" y2="106" stroke="#185FA5" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="340" y1="84" x2="340" y2="106" stroke="#185FA5" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="448" y1="84" x2="448" y2="106" stroke="#185FA5" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="556" y1="84" x2="556" y2="106" stroke="#185FA5" stroke-width="1.2" marker-end="url(#ar)"/>
+<!-- 采集方式 -->
+<text font-size="11" x="30" y="133" dominant-baseline="central" fill="#5F5E5A">采集方式</text>
+<rect x="76" y="106" width="96" height="50" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="124" y="124" text-anchor="middle" dominant-baseline="central" fill="#042C53">IoT接入</text>
+<text font-size="10" x="124" y="140" text-anchor="middle" dominant-baseline="central" fill="#042C53">MQTT/OPC-UA</text>
+<rect x="184" y="106" width="96" height="50" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="232" y="124" text-anchor="middle" dominant-baseline="central" fill="#042C53">批量同步</text>
+<text font-size="10" x="232" y="140" text-anchor="middle" dominant-baseline="central" fill="#042C53">CDC/FTP/SFTP</text>
+<rect x="292" y="106" width="96" height="50" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="340" y="124" text-anchor="middle" dominant-baseline="central" fill="#042C53">文件解析</text>
+<text font-size="10" x="340" y="140" text-anchor="middle" dominant-baseline="central" fill="#042C53">PDF/CAD/图片等</text>
+<rect x="400" y="106" width="96" height="50" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="448" y="124" text-anchor="middle" dominant-baseline="central" fill="#042C53">API拉取</text>
+<text font-size="10" x="448" y="140" text-anchor="middle" dominant-baseline="central" fill="#042C53">RESTful标准协议</text>
+<rect x="508" y="106" width="96" height="50" rx="6" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="10" x="556" y="124" text-anchor="middle" dominant-baseline="central" fill="#042C53">爬虫采集</text>
+<text font-size="10" x="556" y="140" text-anchor="middle" dominant-baseline="central" fill="#042C53">Web多源抓取</text>
+<!-- 汇聚线 -->
+<line x1="124" y1="156" x2="124" y2="174" stroke="#888780" stroke-width="0.8"/>
+<line x1="232" y1="156" x2="232" y2="174" stroke="#888780" stroke-width="0.8"/>
+<line x1="340" y1="156" x2="340" y2="174" stroke="#888780" stroke-width="0.8"/>
+<line x1="448" y1="156" x2="448" y2="174" stroke="#888780" stroke-width="0.8"/>
+<line x1="556" y1="156" x2="556" y2="174" stroke="#888780" stroke-width="0.8"/>
+<line x1="124" y1="174" x2="556" y2="174" stroke="#888780" stroke-width="0.8"/>
+<line x1="340" y1="174" x2="340" y2="192" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<!-- 预处理 -->
+<text font-size="11" x="30" y="218" dominant-baseline="central" fill="#5F5E5A">预处理</text>
+<rect x="76" y="192" width="528" height="52" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text font-size="12" font-weight="bold" x="340" y="210" text-anchor="middle" dominant-baseline="central" fill="#3C3489">格式统一 · 去重过滤 · 编码标准化 · 敏感信息脱敏 · 质量初筛</text>
+<text font-size="10" x="340" y="230" text-anchor="middle" dominant-baseline="central" fill="#534AB7">支持 CSV / JSON / XML / Avro / Protobuf 等多格式自动解析</text>
+<line x1="340" y1="244" x2="340" y2="264" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<!-- 传输 -->
+<text font-size="11" x="30" y="288" dominant-baseline="central" fill="#5F5E5A">传输</text>
+<rect x="76" y="264" width="166" height="46" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text font-size="10" x="159" y="280" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">实时流传输</text>
+<text font-size="10" x="159" y="296" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">Kafka消息队列</text>
+<rect x="254" y="264" width="166" height="46" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text font-size="10" x="337" y="280" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">批量文件传输</text>
+<text font-size="10" x="337" y="296" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">HTTP / HTTPS</text>
+<rect x="432" y="264" width="172" height="46" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text font-size="10" x="518" y="280" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">边缘侧同步</text>
+<text font-size="10" x="518" y="296" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">云边加密通道</text>
+<!-- 汇聚线 -->
+<line x1="159" y1="310" x2="159" y2="328" stroke="#888780" stroke-width="0.8"/>
+<line x1="337" y1="310" x2="337" y2="328" stroke="#888780" stroke-width="0.8"/>
+<line x1="518" y1="310" x2="518" y2="328" stroke="#888780" stroke-width="0.8"/>
+<line x1="159" y1="328" x2="518" y2="328" stroke="#888780" stroke-width="0.8"/>
+<line x1="340" y1="328" x2="340" y2="346" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<!-- 存储 -->
+<text font-size="11" x="30" y="376" dominant-baseline="central" fill="#5F5E5A">存储</text>
+<rect x="76" y="346" width="118" height="50" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="10" x="135" y="362" text-anchor="middle" dominant-baseline="central" fill="#412402">结构化存储</text>
+<text font-size="10" x="135" y="378" text-anchor="middle" dominant-baseline="central" fill="#412402">达梦DB / MySQL</text>
+<rect x="206" y="346" width="118" height="50" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="10" x="265" y="362" text-anchor="middle" dominant-baseline="central" fill="#412402">非结构化存储</text>
+<text font-size="10" x="265" y="378" text-anchor="middle" dominant-baseline="central" fill="#412402">对象存储/HDFS</text>
+<rect x="336" y="346" width="118" height="50" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="10" x="395" y="362" text-anchor="middle" dominant-baseline="central" fill="#412402">流数据存储</text>
+<text font-size="10" x="395" y="378" text-anchor="middle" dominant-baseline="central" fill="#412402">Kafka / HBase</text>
+<rect x="466" y="346" width="138" height="50" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text font-size="10" x="535" y="362" text-anchor="middle" dominant-baseline="central" fill="#412402">湖仓一体平台</text>
+<text font-size="10" x="535" y="378" text-anchor="middle" dominant-baseline="central" fill="#412402">统一管理多类型数据</text>
+<!-- 工具链注释 -->
+<rect x="76" y="414" width="528" height="44" rx="8" fill="none" stroke="#B4B2A9" stroke-width="0.8" stroke-dasharray="4 3"/>
+<text font-size="10" x="340" y="430" text-anchor="middle" fill="#5F5E5A">工具链：多源异构数据爬取工具 · 工业设备数据采集工具 · API数据拉取工具</text>
+<text font-size="10" x="340" y="448" text-anchor="middle" fill="#5F5E5A">· 数据格式解析工具 · 数据预处理管道工具 等</text>
+<text font-size="10" x="340" y="478" text-anchor="middle" fill="#888780">覆盖数据域：生产制造 · 研发创新 · 安全环保 · 经营管理 · 供应链等</text>
+</svg>
+</body>
+</html>

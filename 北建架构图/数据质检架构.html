@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:20px;padding:0;background:white">
+<svg width="800" viewBox="0 0 680 480" xmlns="http://www.w3.org/2000/svg" style="font-family:Arial,sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect width="680" height="480" fill="white"/>
+<text font-size="14" font-weight="bold" x="340" y="26" text-anchor="middle" fill="#1F4E79">数据质检功能模块架构</text>
+<!-- 输入 -->
+<rect x="230" y="40" width="220" height="36" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text font-size="12" font-weight="bold" x="340" y="62" text-anchor="middle" dominant-baseline="central" fill="#085041">标注完成的数据集</text>
+<line x1="340" y1="76" x2="340" y2="96" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<text font-size="10" x="340" y="110" text-anchor="middle" fill="#888780">多维质量评估体系</text>
+<!-- 第一行质检维度 -->
+<rect x="40" y="118" width="178" height="52" rx="7" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="129" y="136" text-anchor="middle" dominant-baseline="central" fill="#0C447C">完整性检测</text>
+<text font-size="10" x="129" y="154" text-anchor="middle" dominant-baseline="central" fill="#185FA5">缺失字段·空值率·条数达标</text>
+<rect x="251" y="118" width="178" height="52" rx="7" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="340" y="136" text-anchor="middle" dominant-baseline="central" fill="#0C447C">准确性检测</text>
+<text font-size="10" x="340" y="154" text-anchor="middle" dominant-baseline="central" fill="#185FA5">数值范围·单位·格式校验</text>
+<rect x="462" y="118" width="178" height="52" rx="7" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="551" y="136" text-anchor="middle" dominant-baseline="central" fill="#0C447C">一致性检测</text>
+<text font-size="10" x="551" y="154" text-anchor="middle" dominant-baseline="central" fill="#185FA5">跨源同字段取值一致性</text>
+<!-- 第二行质检维度 -->
+<rect x="40" y="182" width="178" height="52" rx="7" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="129" y="200" text-anchor="middle" dominant-baseline="central" fill="#3C3489">时效性监控</text>
+<text font-size="10" x="129" y="218" text-anchor="middle" dominant-baseline="central" fill="#534AB7">近3年数据占比 ≥40%</text>
+<rect x="251" y="182" width="178" height="52" rx="7" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="340" y="200" text-anchor="middle" dominant-baseline="central" fill="#3C3489">多样性评估</text>
+<text font-size="10" x="340" y="218" text-anchor="middle" dominant-baseline="central" fill="#534AB7">语义多样性·话题·长度分布</text>
+<rect x="462" y="182" width="178" height="52" rx="7" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="551" y="200" text-anchor="middle" dominant-baseline="central" fill="#3C3489">合规性检测</text>
+<text font-size="10" x="551" y="218" text-anchor="middle" dominant-baseline="central" fill="#534AB7">违禁内容·个人信息·版权</text>
+<!-- 第三行 -->
+<rect x="40" y="246" width="178" height="52" rx="7" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="129" y="264" text-anchor="middle" dominant-baseline="central" fill="#712B13">标注质量评估</text>
+<text font-size="10" x="129" y="282" text-anchor="middle" dominant-baseline="central" fill="#993C1D">一致性·覆盖率·错误率</text>
+<rect x="251" y="246" width="389" height="52" rx="7" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text font-size="11" font-weight="bold" x="445" y="262" text-anchor="middle" dominant-baseline="central" fill="#712B13">国家标准符合性验证（自动化）</text>
+<text font-size="10" x="445" y="280" text-anchor="middle" dominant-baseline="central" fill="#993C1D">内置国标规则库 · 批量合规检验 · 质检报告归档 · 版本凭证留存</text>
+<!-- 汇聚线 -->
+<line x1="129" y1="298" x2="129" y2="324" stroke="#888780" stroke-width="0.8"/>
+<line x1="340" y1="234" x2="340" y2="324" stroke="#888780" stroke-width="0.8"/>
+<line x1="551" y1="234" x2="551" y2="324" stroke="#888780" stroke-width="0.8"/>
+<line x1="129" y1="324" x2="551" y2="324" stroke="#888780" stroke-width="0.8"/>
+<line x1="340" y1="324" x2="340" y2="344" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ar)"/>
+<!-- 研判 -->
+<rect x="200" y="344" width="280" height="44" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.8"/>
+<text font-size="12" font-weight="bold" x="340" y="362" text-anchor="middle" dominant-baseline="central" fill="#633806">质检结果研判</text>
+<text font-size="10" x="340" y="378" text-anchor="middle" dominant-baseline="central" fill="#854F0B">通过 / 告警整改 / 剔除隔离</text>
+<!-- 通过/不通过分支 -->
+<line x1="270" y1="388" x2="180" y2="408" stroke="#185FA5" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="410" y1="388" x2="500" y2="408" stroke="#888780" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#ar)"/>
+<rect x="96" y="408" width="168" height="36" rx="7" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.8"/>
+<text font-size="11" font-weight="bold" x="180" y="430" text-anchor="middle" dominant-baseline="central" fill="#27500A">入库 · 上架 · 流通</text>
+<rect x="416" y="408" width="168" height="36" rx="7" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.8"/>
+<text font-size="11" x="500" y="430" text-anchor="middle" dominant-baseline="central" fill="#444441">反馈整改 / 剔除</text>
+<!-- 底部注释 -->
+<text font-size="10" x="340" y="462" text-anchor="middle" fill="#888780">实时扫描 + 历史回溯 · 多模态数据占比监控 · 时效性数据占比实时统计</text>
+</svg>
+</body>
+</html>

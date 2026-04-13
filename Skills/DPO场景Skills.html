@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水泥生产 DPO · Dify Skills 全景</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+SC:wght@300;400;500;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{--red:#dc2626;--red-dark:#991b1b;--red-mid:#ef4444;--red-light:#fca5a5;--red-pale:#fef2f2;--red-pale2:#fff5f5;--bg:#ffffff;--bg2:#fafafa;--bg3:#f4f4f5;--border:#e5e7eb;--border-s:#d1d5db;--text:#111827;--text-m:#6b7280;--text-d:#9ca3af;--c-dpo:#dc2626;--c-qa:#b91c1c;--c-report:#ef4444;--c-advisory:#f87171;--c-analysis:#fca5a5;--c-light:#9ca3af;--fd:'Sora',sans-serif;--fb:'Noto Sans SC',sans-serif;--fm:'DM Mono',monospace}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth}
+        body{background:#fff;color:var(--text);font-family:var(--fb);font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#dc262614 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+        .site-header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;height:58px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-size:15px;font-weight:700;letter-spacing:-0.02em}
+        .logo-mark{width:34px;height:34px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:800;letter-spacing:-0.03em;flex-shrink:0}
+        .logo-sub{color:var(--text-m);font-weight:400;font-size:13px}
+        .logo-sep{color:var(--border-s);margin:0 2px}
+        .header-pill{background:var(--red-pale);border:1px solid #fecaca;color:var(--red);font-family:var(--fm);font-size:11px;padding:4px 12px;border-radius:20px;font-weight:500}
+        .hero{position:relative;z-index:1;padding:64px 32px 48px;max-width:1200px;margin:0 auto;border-bottom:1px solid var(--border)}
+        .hero-label{font-family:var(--fm);font-size:11px;color:var(--red);letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+        .hero-label::before{content:'';display:inline-block;width:32px;height:2px;background:var(--red);border-radius:1px}
+        .hero h1{font-family:var(--fd);font-size:clamp(34px,5vw,56px);font-weight:800;line-height:1.05;letter-spacing:-0.04em;color:var(--text);margin-bottom:18px}
+        .hero h1 .accent{color:var(--red)}
+        .hero-desc{font-size:15px;color:var(--text-m);max-width:600px;line-height:1.8;margin-bottom:40px}
+        .stats-row{display:flex;gap:10px;flex-wrap:wrap}
+        .stat-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 24px;min-width:130px;transition:border-color .15s,box-shadow .15s}
+        .stat-item:hover{border-color:#fca5a5;box-shadow:0 2px 12px rgba(220,38,38,.08)}
+        .stat-item.hl{background:var(--red-pale);border-color:#fecaca}
+        .stat-n{font-family:var(--fd);font-size:30px;font-weight:800;letter-spacing:-0.04em;line-height:1;margin-bottom:5px;color:var(--text)}
+        .stat-item.hl .stat-n{color:var(--red)}
+        .stat-l{font-size:11px;color:var(--text-m);font-family:var(--fm);letter-spacing:.03em}
+        .main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 32px 80px}
+        .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--border);position:sticky;top:58px;z-index:50;background:rgba(255,255,255,.97);backdrop-filter:blur(8px)}
+        .filter-group{display:flex;gap:5px;flex-wrap:wrap}
+        .filter-btn{font-family:var(--fm);font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text-m);cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:5px}
+        .filter-btn:hover{border-color:#fca5a5;color:var(--red);background:var(--red-pale2)}
+        .filter-btn.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:500}
+        .filter-btn.active .cb{background:rgba(255,255,255,.25);color:#fff}
+        .cb{font-size:10px;background:var(--bg3);border-radius:4px;padding:0 5px;line-height:16px;color:var(--text-m)}
+        .search-box{margin-left:auto;position:relative}
+        .search-box input{font-family:var(--fm);font-size:12px;padding:6px 14px 6px 34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);width:220px;outline:none;transition:border-color .12s,box-shadow .12s}
+        .search-box input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,.08)}
+        .si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-d);font-size:14px;pointer-events:none}
+        .section-header{display:flex;align-items:center;gap:10px;margin:30px 0 10px;padding-bottom:10px;border-bottom:2px solid var(--border)}
+        .sdot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+        .stitle{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
+        .scnt{font-family:var(--fm);font-size:11px;color:var(--text-d);margin-left:4px}
+        .skills-grid{display:flex;flex-direction:column;gap:4px}
+        .skill-card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .12s,box-shadow .12s;animation:fu .25s ease both}
+        @keyframes fu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+        .skill-card:hover{border-color:#fca5a5;box-shadow:0 1px 8px rgba(220,38,38,.06)}
+        .skill-card.open{border-color:var(--red);box-shadow:0 2px 16px rgba(220,38,38,.1)}
+        .skill-header{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none}
+        .sid{font-family:var(--fm);font-size:10px;color:var(--text-d);width:30px;flex-shrink:0}
+        .sbar{width:3px;height:28px;border-radius:2px;flex-shrink:0}
+        .smain{flex:1;min-width:0}
+        .sname{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;white-nowrap;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .skill-card.open .sname{color:var(--red)}
+        .sbrief{font-size:11px;color:var(--text-m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .stags{display:flex;gap:4px;flex-shrink:0}
+        .tag{font-family:var(--fm);font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;border:1px solid}
+        .tag-dpo{color:#991b1b;border-color:#fecaca;background:#fff5f5}
+        .tag-qa{color:#b91c1c;border-color:#fca5a5;background:#fef2f2}
+        .tag-report{color:#dc2626;border-color:#f87171;background:#fff5f5}
+        .tag-advisory{color:#ef4444;border-color:#fca5a5;background:#fef2f2}
+        .tag-analysis{color:#7f1d1d;border-color:#fecaca;background:#fff5f5}
+        .tag-light{color:#6b7280;border-color:#e5e7eb;background:#f9fafb}
+        .tag-workflow{color:#15803d;border-color:#bbf7d0;background:#f0fdf4}
+        .tag-agent{color:#6d28d9;border-color:#ddd6fe;background:#f5f3ff}
+        .tag-mixed{color:#b45309;border-color:#fde68a;background:#fffbeb}
+        .schev{color:var(--text-d);font-size:11px;transition:transform .18s;flex-shrink:0}
+        .skill-card.open .schev{transform:rotate(90deg);color:var(--red)}
+        .skill-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+        .skill-card.open .skill-body{display:block}
+        .sdesc{font-size:13px;color:var(--text-m);line-height:1.7;padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:12px}
+        .dg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+        .dl{font-family:var(--fm);font-size:10px;color:var(--text-d);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+        .dv{font-size:12px;color:var(--text-m);line-height:1.6}
+        .tpill{display:inline-block;font-family:var(--fm);font-size:11px;padding:3px 10px;border-radius:5px;background:var(--red-pale);border:1px solid #fecaca;color:var(--red)}
+        .ioc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+        .iob{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+        .iobt{font-family:var(--fm);font-size:10px;color:var(--text-d);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+        .ioi{font-size:11px;color:var(--text-m);padding:3px 0;display:flex;align-items:flex-start;gap:6px;line-height:1.5}
+        .ioi::before{content:'→';color:#fca5a5;flex-shrink:0;font-family:var(--fm);font-size:10px;margin-top:2px}
+        .tl{font-family:var(--fm);font-size:10px;color:var(--text-d);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
+        .tr{display:flex;flex-wrap:wrap;gap:4px}
+        .tc{font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg2);border:1px solid var(--border);color:var(--text-m);transition:all .1s;cursor:default}
+        .tc:hover{border-color:#fca5a5;color:var(--red);background:var(--red-pale2)}
+        .empty{text-align:center;padding:64px;color:var(--text-m);font-family:var(--fm);font-size:13px;display:none}
+        footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:24px 32px;text-align:center;font-family:var(--fm);font-size:11px;color:var(--text-d);background:var(--bg2)}
+        @media(max-width:768px){.hero,.main{padding-left:16px;padding-right:16px}.site-header{padding:0 16px}.dg,.ioc{grid-template-columns:1fr}.sbrief{display:none}.search-box input{width:140px}}
+    </style>
+</head>
+<body>
+<header class="site-header">
+    <div class="logo">
+        <div class="logo-mark">DPO</div>
+        <span>水泥生产</span>
+        <span class="logo-sep">/</span>
+        <span class="logo-sub">Dify Skills 全景</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+        <span style="font-family:var(--fm);font-size:11px;color:var(--text-m)">v1.0 · 2026</span>
+        <span class="header-pill">28 Skills</span>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="hero-label">Cement Production · Digital Process Optimization</div>
+    <h1>DPO 系统<br><span class="accent">Dify Skills</span> 全景清单</h1>
+    <p class="hero-desc">覆盖水泥生产全流程的 28 个智能 Skill，从配料优化到环保合规，从质检联动到月度报告，供业务系统（ERP / MES / SCADA）直接调用。</p>
+    <div class="stats-row">
+        <div class="stat-item hl"><div class="stat-n">28</div><div class="stat-l">TOTAL SKILLS</div></div>
+        <div class="stat-item"><div class="stat-n">18</div><div class="stat-l">固定工作流</div></div>
+        <div class="stat-item"><div class="stat-n">6</div><div class="stat-l">Agent 模式</div></div>
+        <div class="stat-item"><div class="stat-n">4</div><div class="stat-l">混合模式</div></div>
+    </div>
+</section>
+
+<main class="main">
+    <div class="toolbar">
+        <div class="filter-group">
+            <button class="filter-btn active" data-cat="all" onclick="setFilter('all',this)">全部 <span class="cb" id="cnt-all">28</span></button>
+            <button class="filter-btn" data-cat="dpo" onclick="setFilter('dpo',this)">DPO 核心 <span class="cb">6</span></button>
+            <button class="filter-btn" data-cat="qa" onclick="setFilter('qa',this)">质检联动 <span class="cb">7</span></button>
+            <button class="filter-btn" data-cat="report" onclick="setFilter('report',this)">报告类 <span class="cb">6</span></button>
+            <button class="filter-btn" data-cat="advisory" onclick="setFilter('advisory',this)">建议类 <span class="cb">4</span></button>
+            <button class="filter-btn" data-cat="analysis" onclick="setFilter('analysis',this)">分析类 <span class="cb">3</span></button>
+            <button class="filter-btn" data-cat="light" onclick="setFilter('light',this)">轻量实用 <span class="cb">2</span></button>
+        </div>
+        <div class="search-box">
+            <span class="si">⌕</span>
+            <input type="text" id="q" placeholder="搜索 Skill..." oninput="doSearch(this.value)">
+        </div>
+    </div>
+    <div id="skills-container"></div>
+    <div class="empty" id="empty">未找到匹配的 Skill</div>
+</main>
+
+<footer>水泥生产 DPO 系统 · Dify Skills Directory · 共 28 个 Skill · 覆盖配料优化、烧成诊断、质量预测、能耗分析、设备维护、环保合规等全流程场景</footer>
+
+<script>
+    const SKILLS = [
+        {id:'S01',cat:'dpo',name:'配料优化推荐',mode:'workflow',
+            brief:'原料化验触发，实时计算最优配比方案',
+            desc:'原料化验结果触发，实时计算满足三率值目标的最优配料方案，调用线性规划求解器输出各仓配比调整量及备选方案，LLM 生成操作建议。',
+            scene:'班前生产准备、原料批次切换、配料工程师决策支持',
+            trigger:'LIMS 化验推送 / 主动调用',
+            inputs:['raw_materials（原料成分数组，含化学成分%）','target_KH / SM / IM（三率值目标）','stock_ton（各原料库存量）','production_tph（计划产量 t/h）','cost_priority（是否启用成本最优模式）'],
+            outputs:['primary_recipe（最优配比各仓 %）','predicted_KH / SM / IM（预测三率值）','cost_per_ton（吨熟料原料成本）','alt_recipes（备选方案最多2个）','recommendations（操作建议列表）','confidence（置信度 0-1）'],
+            tools:['LIMS API','ERP库存','配料计算（Code节点）','RAG工况库']},
+
+        {id:'S02',cat:'dpo',name:'烧成参数异常诊断',mode:'agent',
+            brief:'SCADA告警触发，Agent动态追溯三类异常根因',
+            desc:'CEMS 告警或 SCADA 阈值触发，Agent 自主选择工具链，对局部高温 / 温度波动 / 整体低温三类异常做动态追溯和根因定位，最多 5 轮推理循环。',
+            scene:'窑操换班巡检、异常告警响应、烧成工艺优化',
+            trigger:'SCADA 阈值告警 / 定时轮询 / 主动查询',
+            inputs:['kiln_temps（各带温度 °C）','secondary_air_temp（二次风温）','kiln_speed_rpm（窑速）','coal_feed_rate（喂煤量 t/h）','o2_percent（烟气O₂%）','lookback_minutes（回溯窗口）'],
+            outputs:['anomaly_type（异常类型枚举）','severity（P1紧急/P2预警/P3观察）','root_causes（根因+概率）','action_sequence（操作序列含delta）','agent_tool_calls_log（推理日志）'],
+            tools:['时序DB','趋势检测工具','频谱故障检测','RAG故障案例库','DCS告警推送']},
+
+        {id:'S03',cat:'dpo',name:'熟料质量预测',mode:'mixed',
+            brief:'出窑前30min预测fCaO和28d强度，双模型融合',
+            desc:'出窑前 30 分钟，ML 模型与 Bogue 机理模型并行预测 fCaO 和 28d 强度，结果集成后 LLM 生成含 SHAP 解释的干预建议，一致性分数低于 0.6 时结果降级预警。',
+            scene:'出窑前质量超前判断、避免欠烧熟料入库、烧成参数闭环验证',
+            trigger:'定时每 10 min / 主动调用',
+            inputs:['kiln_zone_temps（各带温度）','flame_temp_est（火焰温度估算）','residence_time_min（停留时间）','raw_meal_KH / SM / IM（入窑三率值）','coal_ash_percent（煤灰掺量%）'],
+            outputs:['fcao_predicted + 90%置信区间','strength_28d_predicted + 区间 MPa','clinker_minerals（矿物组成%）','quality_grade（4级）','intervention_actions（含 delta 和预期改善量）','key_drivers（SHAP 贡献排名）','model_agreement（双模型一致性）'],
+            tools:['SCADA实时API','LIMS生料化验','ML预测模型服务','Bogue计算（Code节点）','强度预测模型','RAG相似工况']},
+
+        {id:'S04',cat:'dpo',name:'能耗异常分析与节能建议',mode:'workflow',
+            brief:'规则引擎快筛+LLM深度分析Top-N异常设备',
+            desc:'分层架构：规则引擎快速筛查异常设备（偏差 >5% / 连续3班上升 / 效率低于90%），LLM 仅对 Top-N 异常设备做深度根因分析和量化节能建议，含 ROI 和可行性时机。',
+            scene:'班次能耗复盘、月度节能管理、设备效率评估',
+            trigger:'班次结束自动触发 / 主动调用',
+            inputs:['analysis_period（分析时间窗口）','production_line_id','scope（设备类型范围）','benchmark_mode（基准模式）','roi_electricity_price（电价 元/kWh）'],
+            outputs:['anomaly_devices（偏差量+根因+能耗差量）','saving_measures（措施+年化收益+回收期+可行性时机）','total_annual_saving_cny（年化总节省）','total_potential_saving_kwh'],
+            tools:['电表API（电能管理系统）','MES产量API','基准能耗数据库','单位电耗计算','SCADA工艺参数','RAG节能案例库','ROI计算工具','节能报告推送']},
+
+        {id:'S05',cat:'dpo',name:'关键设备预测性维护',mode:'workflow',
+            brief:'三层架构：HI健康评分→RUL估算→维护窗口规划',
+            desc:'三层架构：多模态信号融合计算健康指数（HI 0-100）→ 退化趋势外推剩余寿命（RUL）→ LLM 结合生产计划规划维护窗口，生成 CMMS 工单草稿，P1 级同步推送。',
+            scene:'设备巡检、检修计划制定、备件采购决策',
+            trigger:'定时轮询 / 振动阈值告警 / 主动查询',
+            inputs:['equipment_ids（设备列表）','vibration_rms + spectrum（振动时域+频谱）','bearing_temp_degc（轴承温度）','oil_viscosity_cst + particle_count（油液）','lookback_days（历史回溯天数）','risk_tolerance（保守/标准/激进）'],
+            outputs:['health_index（HI 0-100 多信号加权）','rul_days + 置信区间','fault_modes（故障模式+频谱证据）','maintenance_plan（窗口+备件清单+工时）','cmms_work_orders（Draft状态工单草稿）'],
+            tools:['振动采集系统API','SCADA温度电流','油液监测系统','健康指数计算','RUL退化模型','频谱故障检测（BPFO/BPFI）','RAG历史故障库','CMMS API（写操作·需审批）']},
+
+        {id:'S06',cat:'dpo',name:'环保排放合规诊断',mode:'workflow',
+            brief:'四层流水线：数据校验→实时比对+趋势预判→法规匹配→处置上报',
+            desc:'四层流水线：CEMS 有效性校验 → 实时阈值比对 + 15min 超标概率预测 → 法规 RAG 匹配适用标准条款 → LLM 根因分析，三路并行输出（操作指令/合规台账/监管上报）。',
+            scene:'排放实时监控、超标预警响应、危废合规管理',
+            trigger:'CEMS 实时推送 / 定时轮询 / 主动查询',
+            inputs:['cems_readings（NOₓ/SO₂/粉尘/O₂，折算6%基准氧）','stack_id（排放口编号）','kiln_operating_status（正常/启停/检修）','sncr_ammonia_lph（喷氨量）','facility_id + region_code（企业和地区标识）'],
+            outputs:['compliance_status（合规/预警/超标/严重超标）','pollutant_details（含适用标准完整条款引用）','forecast_exceed_prob（15min超标概率）','root_causes','remediation_actions（含具体调整量）','legal_risk_summary','ledger_entry_id'],
+            tools:['CEMS实时API','CEMS历史API','O₂折算计算','超标趋势预测模型','法规知识库RAG','SCADA工艺上下文','合规台账写入','监管平台上报','DCS告警推送']},
+
+        {id:'S07',cat:'qa',name:'熟料全分析解读',mode:'workflow',
+            brief:'化验单入库即触发，SPC判异+双版本报告',
+            desc:'化验单入库即触发，自动完成三率值/Bogue矿物计算、有害成分评估、SPC 判异（4条Western Electric规则）、预测-实测比对，生成操作员版（3句话）和工程师版双版本。',
+            scene:'化验员日常工作、班次质量快报、质量工程师复盘',
+            trigger:'LIMS 新报告推送 / 主动调用',
+            inputs:['CaO / SiO₂ / Al₂O₃ / Fe₂O₃ / MgO / fCaO / SO₃ / LOI（必填）','K₂O / Na₂O / Cl⁻（可选）','sample_id + production_line_id + sample_time','linked_prediction_id（关联预测记录）'],
+            outputs:['computed_KH / SM / IM','bogue_minerals（C₃S/C₂S/C₃A/C₄AF%）','harmful_components（含风险等级和限值余量%）','spc_signals（规则类型+方向+详情）','trend_summary（近24h趋势）','operator_summary（3句话）','engineer_report（结构化）','model_drift_flag'],
+            tools:['LIMS质量目标API','三率值+矿物计算','有害成分评估','LIMS历史序列','SPC判异计算','预测记录查询（跨Skill）','RAG历史工况','台账写入']},
+
+        {id:'S08',cat:'qa',name:'水泥成品质量追溯',mode:'agent',
+            brief:'批次号输入，Agent动态选择三条追溯链',
+            desc:'输入批次号/投诉工单，Agent 动态选择原料链（MgO/SO₃异常）/ 烧成链（fCaO/C₃S不足）/ 粉磨链（细度/凝结异常）进行追溯，跨系统串联证据，调用 `skill_log_get_period` 排除主动调整干扰。',
+            scene:'客户投诉处理、出厂不合格品溯源、质量体系审核',
+            trigger:'批次号 / 投诉工单号 / 留样编号（三选一）',
+            inputs:['batch_number / complaint_order_id / sample_id','quality_issues（问题描述列表）','issue_measurements（实测偏差值）','trace_depth（quick 3轮/standard 6轮/deep 10轮）'],
+            outputs:['production_window（生产时间窗口+熟料批次）','primary_root_cause（含责任工序和证据链）','contributing_factors（次要因素+影响权重）','evidence_chain（可追溯，含数据来源和时间戳）','corrective_actions + preventive_actions'],
+            tools:['批次时间映射系统','LIMS出厂报告','LIMS熟料全分析','SCADA烧成历史','LIMS生料记录','配料日志API','粉磨参数日志','偏差评分计算','RAG质量案例库','Dify跨Skill日志API','质量台账写入']},
+
+        {id:'S09',cat:'qa',name:'出磨生料质量实时管控',mode:'workflow',
+            brief:'双频次分档触发（1h轻量/2h完整/超限立即）',
+            desc:'三档触发策略：中子仪每 1h 触发轻量快报，荧光每 2h 触发完整解读，偏差超阈值立即触发告警+调参指令。将三率值偏差直接转化为各仓配料调整量（±t/h）。',
+            scene:'生料磨操作员实时调参、生产过程纠偏、三率值稳定控制',
+            trigger:'中子仪1h / 荧光2h / 偏差>阈值立即',
+            inputs:['current_raw_meal_analysis（三率值实测）','lookback_count（历史条数）','target_KH / SM / IM（控制目标）','alert_threshold_pct（偏差告警阈值，默认3%）'],
+            outputs:['deviation_summary（各指标偏差量和方向）','spc_signals（SPC判异结果）','recipe_adjustment（各仓±t/h调整建议）','operator_brief（一条操作指令）','completeness_alert（漏检提醒）'],
+            tools:['LIMS荧光监测样API','中子仪在线API','SPC计算工具','配比纠偏计算','移动端推送']},
+
+        {id:'S10',cat:'qa',name:'煤粉质量波动快速响应',mode:'workflow',
+            brief:'化验完成即推送，信息传递延迟从30min压缩到60s',
+            desc:'入窑煤粉化验完成立即触发，对比热值/细度/灰分与上批次的变化量，直接计算喂煤量和一次风速调整建议，将信息传递延迟从人工模式的 30min 压缩到 60s 以内。',
+            scene:'窑操接收煤粉参数变更通知、燃烧调整支持',
+            trigger:'LIMS 入窑煤粉化验推送',
+            inputs:['coal_batch_id（新批次化验单）','current_heat_value（热值 kcal/kg）','current_ash_pct（灰分%）','current_fineness（细度 R80μm%）'],
+            outputs:['vs_last_batch（各指标与上批次对比变化量）','feed_rate_adjustment（喂煤量 delta t/h）','primary_air_adjustment（一次风速建议）','operator_instruction（一句话操作指令）'],
+            tools:['LIMS煤粉历史化验','SCADA当前工艺参数','喂煤量计算（Code节点）','移动端推送']},
+
+        {id:'S11',cat:'qa',name:'原燃材料进厂质量预警',mode:'workflow',
+            brief:'新批次入库时检测成分漂移趋势，提前预警',
+            desc:'新批次化验入库时，与同供应商近 10 批历史化验值做对比，检测成分漂移趋势（连续3批递增/递减），提前预警可能影响配料的系统性成分变化，同步通知采购部门。',
+            scene:'进厂质检、采购部供应商沟通、配料工程师原料状态监控',
+            trigger:'LIMS 进厂化验推送',
+            inputs:['batch_lims_id（新批次化验单）','material_type（物料类型）','supplier_id（供应商标识）'],
+            outputs:['drift_detection（漂移方向和斜率）','risk_level（低/中/高）','vs_historical（近10批对比表）','procurement_alert（采购预警内容）','suggested_action（建议动作）'],
+            tools:['LIMS历史化验API','成分漂移趋势计算','SPC判异（Nelson规则）','消息推送（采购部）']},
+
+        {id:'S12',cat:'qa',name:'化验完整性监控',mode:'workflow',
+            brief:'每2.5h轮询，自动识别漏检并推送补测提醒',
+            desc:'定期检查各检验节点（荧光2h/中子仪1h/物理强度/全分析）的数据覆盖率，识别超时未提交的漏检记录，推送补测提醒，保障下游 Skill 的数据输入质量。',
+            scene:'化验室管理、数据质量保障、Skill 数据链完整性',
+            trigger:'每 2.5 小时定时轮询',
+            inputs:['production_line_id','check_window_hours（检查回溯窗口，默认3h）','expected_intervals（各检验节点间隔配置）'],
+            outputs:['completeness_by_type（各类型完整率%）','missing_records（漏检列表，含检验节点和超时时长）','overdue_alerts（推送列表）','weekly_trend（本周完整率趋势）'],
+            tools:['LIMS记录查询API','缺口计算（Code节点）','移动端推送（化验员+质量主管）']},
+
+        {id:'S13',cat:'qa',name:'替代燃料掺烧评估',mode:'workflow',
+            brief:'三链路：环保合规/质量影响/成本效益并行评估',
+            desc:'新批次替代燃料进厂时，三链路并行评估：链路A环保合规（Cl⁻/重金属月度累计vs许可证限额），链路B质量影响（掺烧期vs非掺烧期双样本t检验），链路C成本效益（净节省元/t）。',
+            scene:'危废协同处置决策、替代燃料采购评估、掺烧比例调整',
+            trigger:'替代燃料化验完成 / 主动调用',
+            inputs:['alt_fuel_batch_id','fuel_type（混合替代燃料/危废混合/危废燃料）','permit_limits（许可证限额对象）','standard_coal_price_yuan（标准煤价格）'],
+            outputs:['compliance_verdict（合规/超限）','quality_impact_verdict（无影响/轻微/显著）','net_saving_yuan（净节省）','max_safe_ratio（安全掺量上限%）','cofiring_recommendation（建议时段和比例）'],
+            tools:['LIMS替代燃料分析','SCADA掺烧投料记录','合规检查计算','质量影响统计分析','成本效益计算','法规知识库RAG']},
+
+        {id:'S14',cat:'report',name:'班次质量日报自动生成',mode:'workflow',
+            brief:'换班前30min自动推送，双版本报告+待跟进事项',
+            desc:'班次结束前 30 分钟自动触发，汇聚三组 LIMS+SCADA 五路数据，计算班次综合评分（fCaO达标率30%+KH25%+产量20%+化验完整率15%+无告警10%），生成双版本报告并分层推送。',
+            scene:'换班交接、班组长日常管理、质量工程师班次复盘',
+            trigger:'定时 06:30 / 14:30 / 22:30',
+            inputs:['shift_id（系统自动推算）','production_line_id（系统自动）','time_window（系统自动，班次起止时间）'],
+            outputs:['shift_score（0-100综合评分）','shift_grade（优秀/良好/合格/待改善）','kpi_summary（各指标均值+达标率+趋势）','spc_signals','anomaly_events','pending_followups（跨班次连续追踪）','operator_brief（3-5句）','engineer_report（结构化）'],
+            tools:['LIMS三组批量查询','SCADA班次汇总','上班日报台账读取','KPI计算','班次评分计算','RAG近7天同班对比','台账写入','分层推送（操作员/工程师/经理）']},
+
+        {id:'S15',cat:'report',name:'月度质量分析报告自动撰写',mode:'workflow',
+            brief:'五模块并行计算+LLM分章节撰写，15-20页Word',
+            desc:'五计算模块并行（统计描述/趋势分析/异常事件/同期对比/强度预测验证），LLM 分三章节并行撰写（综合评价/异常根因述评/下月改进计划），含 PDCA 历史措施闭环跟踪，保留人工审核节点。',
+            scene:'月度质量管理、管理层汇报、质量体系归档',
+            trigger:'月末定时（每月最后一天 22:00）/ 主动调用',
+            inputs:['report_month','production_line_id','compare_last_month（是否加入上月对比）','target_values（质量目标值对象）','previous_improvements（上月改进措施列表，用于PDCA跟踪）'],
+            outputs:['report_docx_url（含图表的完整Word文档）','kpi_table（BI系统用结构化数据）','cpk_summary（各指标Cpk值和等级ABCD）','anomaly_count（分级统计）','improvement_items（下月改进清单含难度）','monthly_score','prediction_accuracy（预测Skill本月准确率）'],
+            tools:['LIMS月度全量','LIMS同期历史对比','SCADA月度汇总','描述统计+Cpk计算','趋势分析','强度相关性验证','图表数据包生成','RAG历史报告+改进措施库','班次评分汇总','Word文档组装','审核节点','归档通知']},
+
+        {id:'S16',cat:'report',name:'供应商月度质量绩效报告',mode:'workflow',
+            brief:'四维评分（合格率/稳定性/交货/趋势），C/D级生成通知函',
+            desc:'四维加权评分：质量合格率40%、成分稳定性30%（含批次σ）、交货及时率20%、趋势方向10%（含一票否决）。横向同类排名，C/D级自动生成正式通知函，三版本分发（采购/质量/管理层）。',
+            scene:'供应商管理、采购谈判支持、月度供应商评审',
+            trigger:'月初（每月1日 06:00）/ 采购主动调用',
+            inputs:['report_month','material_types（纳入统计的物料类型）','score_weights（四维权重，可差异化配置）','critical_specs（各物料关键成分控制指标）','veto_conditions（一票否决条件）'],
+            outputs:['supplier_count_by_grade（ABCD各级数量）','risk_suppliers（C/D级含主要扣分原因）','supplier_scorecards（含6月评分趋势）','main_report_docx_url','supplier_letters（C/D级个别通知函）','scorecard_xlsx_url'],
+            tools:['ERP进货交货记录','LIMS进厂化验','LIMS历史供应商汇总','评分计算（含一票否决）','同类排名计算','成分稳定性计算','RAG历史处置案例','主报告生成','通知函生成','归档通知']},
+
+        {id:'S17',cat:'report',name:'替代燃料使用月度总结',mode:'workflow',
+            brief:'三链路并行，生成环保监管版+技术版+管理层摘要版',
+            desc:'三链路并行计算（环保合规/质量影响统计检验/成本效益核算），LLM 三视角整合撰写，生成三版本文档：环保监管版（符合地方法规格式，可直接提交）、内部技术版、管理层一页纸摘要。',
+            scene:'月度环保上报、管理层掺烧策略决策、成本核算',
+            trigger:'月末定时（每月1日 08:00）/ 环保主管调用',
+            inputs:['report_month','alt_fuel_types','permit_limits（许可证月度限额）','standard_coal_price_yuan','regulatory_format（national/guangdong/jiangsu）','next_month_plan（下月计划采购量）'],
+            outputs:['total_alt_fuel_ton + substitution_rate_pct','compliance_status + permit_utilization（各限额使用率%）','quality_impact_verdict + cofiring_vs_baseline（掺烧期vs基准期对比）','net_saving_yuan + saving_per_ton_clinker','next_month_recommendation（品种+比例+安全边际）','三版本文档URL'],
+            tools:['LIMS替代燃料分析','SCADA掺烧投料日志','ERP成本明细','LIMS熟料掺烧期分组','合规计算','质量影响t检验','成本效益核算','法规知识库RAG','掺烧经验历史RAG','三版本文档生成','归档通知']},
+
+        {id:'S18',cat:'report',name:'出厂质量证明书自动生成',mode:'workflow',
+            brief:'批次号输入，按GB格式自动生成质量证明书',
+            desc:'输入批次号，自动关联 LIMS 出厂检验数据，按 GB/T 格式生成包含强度、安定性、细度、化学成分的质量证明书，支持电子章，替代人工录入，消除错误和延误。',
+            scene:'销售发货、客户质量文件请求、合同履约证明',
+            trigger:'按需（出货时，销售系统调用）',
+            inputs:['batch_number（出厂批次号）','customer_id（客户信息）','cert_template_id（证书模板版本）'],
+            outputs:['cert_pdf_url（可下载PDF）','cert_data（结构化检验数据）','batch_qa_summary（批次质量摘要）'],
+            tools:['LIMS出厂检验报告','GB格式证书模板','PDF生成服务','电子章服务']},
+
+        {id:'S19',cat:'report',name:'化验员操作一致性月报',mode:'workflow',
+            brief:'统计同批次不同化验员差异，识别系统性和随机偏差',
+            desc:'统计分析同批次不同化验员检测结果差异，区分系统性偏差（某人结果一贯偏高/低）和随机偏差（波动过大），生成月度能力比对报告，辅助培训和计量体系审核。',
+            scene:'化验室质量管理、人员培训考核、ISO/计量体系审核',
+            trigger:'月末定时',
+            inputs:['report_month','lab_group（分析组/物理组/控制组）','min_paired_samples（最少配对样本数，默认5）'],
+            outputs:['bias_by_operator（系统偏差量和方向）','variance_by_operator（随机偏差σ）','outlier_events（离群事件列表）','ranking_table（化验员能力排名）','training_recommendations（培训建议）'],
+            tools:['LIMS化验员记录查询','Bland-Altman偏差统计','Word报告生成']},
+
+        {id:'S20',cat:'advisory',name:'混合材最优掺量动态建议',mode:'workflow',
+            brief:'线性规划求解，含敏感性分析和绑定约束识别',
+            desc:'线性规划求解（成本最小化目标），硬约束：GB标准上限+强度下限（含安全余量）+库存；软约束：单品种比例上限+相邻变化幅度≤3%。含敏感性分析和绑定约束识别，输出操作员三句话指令。',
+            scene:'新批次混合材进厂决策、每周掺量策略审查、品种切换准备',
+            trigger:'新批次活性化验完成 / 每周一 07:00',
+            inputs:['target_grade（PC42.5/PC52.5/PO42.5）','planning_days（适用生产计划天数）','new_batch_lims_id（触发批次ID）','strength_safety_margin_mpa（强度安全余量，默认3）','optimize_mode（cost_min/clinker_min/balanced）'],
+            outputs:['optimal_recipe（各组分掺量%）','predicted_strength_28d + 安全余量 MPa','cost_per_ton + saving_vs_current（日/月节省金额）','binding_constraints（紧约束列表）','sensitivity_analysis（单位弹性：活性每变1%掺量变多少）','operator_instruction（三句话指令）','stock_alert（库存预警）'],
+            tools:['LIMS混合材活性化验','LIMS熟料当前质量','ERP价格库存','强度叠加原理预测（本厂回归系数）','SciPy线性规划求解','敏感性分析计算','RAG历史配方验证','回归系数更新（每批次实测校准）','分层推送']},
+
+        {id:'S21',cat:'advisory',name:'煅烧制度周优化建议',mode:'workflow',
+            brief:'提炼本周最优煅烧参数组合，作为下周操作基准',
+            desc:'汇总本周荧光全分析、衍射仪矿物实测、入窑分解率和物理强度数据，分析哪些班次 C₃S 生成效率最高及其对应的工艺参数，提炼本周最优煅烧参数组合作为下周操作基准建议。',
+            scene:'生产技术周会、工艺工程师参数优化、班组操作基准设定',
+            trigger:'每周一定时',
+            inputs:['analysis_week（本周时间范围）','production_line_id'],
+            outputs:['best_shift_params（最优参数组合：窑速/喂料量/温度）','c3s_efficiency_analysis（各班次C₃S生成效率）','optimization_potential（量化可提升潜力）','next_week_recommendations（下周操作基准建议）'],
+            tools:['LIMS荧光全分析','控制组衍射仪记录','物理强度记录','SCADA工艺参数历史','参数效率统计计算','RAG历史最优工艺经验']},
+
+        {id:'S22',cat:'advisory',name:'石灰石搭配使用建议',mode:'workflow',
+            brief:'多矿点库存搭配，使进磨成分稳定在目标区间',
+            desc:'新批次石灰石进厂后，结合当前多个矿点/批次的库存成分和库存量，用配比优化计算最优搭配比例，使进磨石灰石成分稳定在目标区间，输出消耗顺序建议。',
+            scene:'多矿山搭配管理、多矿点原料协调、配料系统前置优化',
+            trigger:'石灰石新批次进厂化验完成 / 主动调用',
+            inputs:['new_batch_analysis（新批次成分）','current_stock_batches（各库存批次成分和库存量）','target_composition（目标进磨成分）'],
+            outputs:['blending_ratios（各批次搭配比例%）','predicted_blend_composition（混合后预测成分）','stability_improvement（稳定性改善量化）','usage_sequence_advice（消耗顺序建议）'],
+            tools:['LIMS石灰石化验历史','ERP石灰石库存量','混合成分计算','配比优化求解']},
+
+        {id:'S23',cat:'advisory',name:'留样复检决策建议',mode:'workflow',
+            brief:'投诉性质分类，评估复检必要性，输出重点检验项',
+            desc:'客户投诉输入后，基于 RAG 历史案例库和 LLM 分析，判断投诉属于产品质量问题、施工方问题还是运输损坏，评估留样复检必要性，输出重点复检项清单，过滤无效复检。',
+            scene:'客户投诉初处理、质量工程师接单分流、客服技术支持',
+            trigger:'按需（投诉发生时）',
+            inputs:['complaint_description（投诉症状描述）','batch_number（涉及批次号）','customer_usage_info（施工信息）'],
+            outputs:['complaint_classification（产品质量/施工问题/运输损坏/其他）','retest_necessity（复检必要性判断+理由）','priority_test_items（重点复检项清单）','initial_response_draft（初步回复草稿）'],
+            tools:['LIMS出厂检验记录','RAG历史投诉案例库','LLM分类推理']},
+
+        {id:'S24',cat:'advisory',name:'品种切换过渡期质量建议',mode:'workflow',
+            brief:'切换时自动生成过渡期操作要点和监控指标',
+            desc:'品种切换时自动生成过渡期质量控制要点、关键监控指标和建议切换时机（避开质量波动期），输出磨机参数调整清单，帮助操作员平稳过渡。',
+            scene:'品种切换计划制定、磨机操作员过渡期指导',
+            trigger:'品种切换申请时 / 主动调用',
+            inputs:['from_grade（当前品种）','to_grade（目标品种）','planned_switch_time（计划切换时间）','current_clinker_quality（当前熟料质量状态）'],
+            outputs:['switch_checklist（过渡期操作清单，含配比变更）','key_monitoring_indicators（重点监控指标和频率）','recommended_timing（建议切换时机和依据）','transition_duration_est（预计过渡期时长）'],
+            tools:['LIMS历史切换记录','RAG品种切换经验库','LLM建议生成']},
+
+        {id:'S25',cat:'analysis',name:'强度波动根因深度分析',mode:'agent',
+            brief:'两阶段：统计筛查Top-3假设+Agent逐假设验证+情景量化',
+            desc:'两阶段架构：统计筛查（方差分解+F检验）生成 Top-3 归因假设，Agent 逐假设调用工具验证（时序互相关确认因果时滞+双样本t检验确认显著性）。情景量化各因素可消除贡献度%。',
+            scene:'月报Cpk不达标触发、连续σ扩大触发、质量工程师专项分析',
+            trigger:'月报Cpk<1.0 / σ连续3周扩大 / 主动调用',
+            inputs:['analysis_period（波动期时间范围）','strength_type（clinker_28d/cement_28d等）','baseline_period（稳定基准期，不传自动选取）','analysis_scope（重点分析工序，不传全分析）','agent_max_rounds（默认8轮）'],
+            outputs:['variation_type（均值偏移/方差增大/周期性/混合）','root_causes（含贡献度%和统计证据）','scenario_impact（情景量化：该因素控制后σ预期降幅）','process_responsibility（各工序总贡献%）','improvement_actions（含预期收益和实施难度）','narrative_report（完整叙述）'],
+            tools:['LIMS强度时序','LIMS四工序历史数据','SCADA工艺稳定性','时间对齐计算（各工序时延修正）','方差分解+F检验','时滞互相关分析','双样本t检验','贡献度量化（偏相关+情景建模）','RAG历史波动案例','Dify跨Skill日志查询','台账写入']},
+
+        {id:'S26',cat:'analysis',name:'过程能力Cpk趋势分析',mode:'workflow',
+            brief:'追踪Cpk趋势，识别下降指标，输出改进优先级矩阵',
+            desc:'对 KH/SM/IM/fCaO/C₃S 等关键指标计算 Cp 和 Cpk（A级≥1.67/B级≥1.33/C级≥1.0/D级<1.0），追踪周度趋势，识别能力下降指标，输出过程改进优先级矩阵（影响×改进难度）。',
+            scene:'质量工程师周度分析、月报第二章数据、过程改进立项决策',
+            trigger:'每周定时 / 月报生成时联动触发',
+            inputs:['analysis_period','indicators（待分析指标列表）','production_line_id','cpk_grade_thresholds（等级分界值，可配置）'],
+            outputs:['cpk_by_indicator（各指标Cp/Cpk值和ABCD等级）','trend_by_indicator（周度趋势方向）','deteriorating_indicators（能力下降指标列表）','improvement_priority_matrix（优先级矩阵）'],
+            tools:['LIMS历史序列查询','Cpk统计计算（Code节点）','趋势显著性检验','优先级矩阵生成']},
+
+        {id:'S27',cat:'analysis',name:'原料成分与熟料质量相关性分析',mode:'workflow',
+            brief:'12-24月长周期Ridge回归，批次σ显式化，输出采购标准修订建议',
+            desc:'12-24 个月长周期数据，将批次间标准差（稳定性）显式化为自变量，Ridge 回归建模（处理多重共线性），输出影响权重排名、单位弹性系数和采购标准修订建议（收紧/放宽/维持/新增σ要求）。',
+            scene:'采购标准制定修订、新供应商评估、年度质量策略规划',
+            trigger:'月度定时（每月5日）/ 采购标准修订时',
+            inputs:['analysis_window_months（12-24个月）','raw_material_types（分析的物料类型）','clinker_quality_targets（因变量质量指标）','include_stability_features（是否纳入批次σ，默认true）','exclude_periods（排除异常时段如年修）'],
+            outputs:['correlation_matrix（含p值和显著性标记）','top_correlations（Top-10显著相关对）','feature_importance（Ridge回归标准化系数排名）','sensitivity_per_unit（单位弹性：成分变化1%质量变化量）','supplier_quality_contribution（各供应商质量贡献对比）','standard_revisions（逐项采购标准修订建议）','new_stability_requirements（新增批次间一致性要求建议）'],
+            tools:['LIMS原料长周期历史','LIMS熟料KPI历史','ERP原料消耗日志','批次时间对齐计算','批次σ特征工程','Pearson+Spearman相关矩阵','Ridge回归建模（交叉验证调参）','行业标准基准RAG','采购标准库更新（需人工审核）']},
+
+        {id:'S28',cat:'light',name:'交接班智能摘要',mode:'workflow',
+            brief:'换班前15min自动生成，替代手写交班本',
+            desc:'换班前 15 分钟自动汇聚 8 小时内的 SCADA 告警记录、DCS 操作日志、LIMS 化验异常，LLM 生成结构清晰的交班摘要（已处置事项+待跟进事项），替代手写交班本。',
+            scene:'三班操作员日常交接、班组长接班准备',
+            trigger:'班次结束前 15min 定时（06:45/14:45/22:45）',
+            inputs:['shift_id（系统自动推算）','production_line_id（系统自动）'],
+            outputs:['resolved_events（本班已处置事项列表）','pending_items（待跟进事项，高亮显示）','abnormal_summary（异常摘要，含时间和处置状态）','shift_summary_text（一段话交班摘要）'],
+            tools:['SCADA告警记录API','DCS操作日志API','LIMS化验异常查询','LLM摘要生成','移动端推送']}
+    ];
+    const CAT_COLORS={dpo:'#dc2626',qa:'#b91c1c',report:'#ef4444',advisory:'#f87171',analysis:'#fca5a5',light:'#9ca3af'};
+    const CAT_LABELS={dpo:'DPO核心',qa:'质检联动',report:'报告类',advisory:'建议类',analysis:'分析类',light:'轻量实用'};
+    const MODE_LABELS={workflow:'固定工作流',agent:'Agent模式',mixed:'混合模式'};
+    let currentFilter='all',currentQuery='';
+    function setFilter(cat,btn){currentFilter=cat;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSkills()}
+    function doSearch(val){currentQuery=val.trim().toLowerCase();renderSkills()}
+    function getVisible(){return SKILLS.filter(s=>{const catOk=currentFilter==='all'||s.cat===currentFilter;const q=currentQuery;const qOk=!q||s.name.includes(q)||s.desc.includes(q)||s.scene.includes(q)||s.brief.includes(q);return catOk&&qOk})}
+    function renderSkills(){
+        const container=document.getElementById('skills-container');
+        const emptyEl=document.getElementById('empty');
+        const visible=getVisible();
+        if(!visible.length){container.innerHTML='';emptyEl.style.display='block';return}
+        emptyEl.style.display='none';
+        const groups={};
+        visible.forEach(s=>{if(!groups[s.cat])groups[s.cat]=[];groups[s.cat].push(s)});
+        const catOrder=['dpo','qa','report','advisory','analysis','light'];
+        let html='';
+        catOrder.forEach(cat=>{
+            if(!groups[cat])return;
+            const color=CAT_COLORS[cat];
+            html+=`<div class="section-header"><div class="sdot" style="background:${color}"></div><span class="stitle">${CAT_LABELS[cat]}</span><span class="scnt">${groups[cat].length} Skills</span></div><div class="skills-grid">`;
+            groups[cat].forEach((s,idx)=>{
+                html+=`<div class="skill-card" id="card-${s.id}" style="animation-delay:${idx*0.03}s">
+        <div class="skill-header" onclick="toggleCard('${s.id}')">
+          <span class="sid">${s.id}</span>
+          <div class="sbar" style="background:${CAT_COLORS[s.cat]}"></div>
+          <div class="smain">
+            <div class="sname">${s.name}</div>
+            <div class="sbrief">${s.brief}</div>
+          </div>
+          <div class="stags">
+            <span class="tag tag-${s.cat}">${CAT_LABELS[s.cat]}</span>
+            <span class="tag tag-${s.mode}">${MODE_LABELS[s.mode]}</span>
+          </div>
+          <span class="schev">&#9658;</span>
+        </div>
+        <div class="skill-body">
+          <div class="sdesc">${s.desc}</div>
+          <div class="dg">
+            <div><div class="dl">应用场景</div><div class="dv">${s.scene}</div></div>
+            <div><div class="dl">触发方式</div><div class="dv"><span class="tpill">${s.trigger}</span></div></div>
+          </div>
+          <div class="ioc">
+            <div class="iob"><div class="iobt">主要输入参数</div>${s.inputs.map(i=>`<div class="ioi">${i}</div>`).join('')}</div>
+            <div class="iob"><div class="iobt">主要输出字段</div>${s.outputs.map(o=>`<div class="ioi">${o}</div>`).join('')}</div>
+          </div>
+          <div class="tl">工具调用（${s.tools.length}个）</div>
+          <div class="tr">${s.tools.map(t=>`<span class="tc">${t}</span>`).join('')}</div>
+        </div>
+      </div>`;
+            });
+            html+=`</div>`;
+        });
+        container.innerHTML=html;
+        document.getElementById('cnt-all').textContent=visible.length;
+    }
+    function toggleCard(id){document.getElementById('card-'+id).classList.toggle('open')}
+    renderSkills();
+</script>
+</body>
+</html>
